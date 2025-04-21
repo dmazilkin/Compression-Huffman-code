@@ -21,11 +21,11 @@ typedef struct {
 } arg_t;
 
 typedef enum {
-  SUCCESS=0,
-  ERROR_UNDEFINED_INPUT,
-  ERROR_UNKNOWN_OPTION,
+  PARSE_SUCCESS=0,
+  PARSE_ERROR_UNDEFINED_INPUT,
+  PARSE_ERROR_UNKNOWN_OPTION,
 } arg_parser_t;
 
-arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst);
+arg_parser_t parse_args(int argc, char* args_src[], arg_t* args_dst);
 
 #endif //ARG_PARSER_H

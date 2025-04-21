@@ -3,7 +3,7 @@
 #include "arg_parser.h"
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
+arg_parser_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
     for (int i = 1; i < argc; i++) {
         if (args_src[i][0] == '-') {
             if (args_src[i][1] == '-') {
@@ -17,7 +17,7 @@ arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
                     args_dst->output_type = OUTPUT_FILE;
                     args_dst->output_val = args_src[i+1];
                 } else {
-                    return ERROR_UNKNOWN_OPTION;
+                    return PARSE_ERROR_UNKNOWN_OPTION;
                 }
             } else {
                 if (args_src[i][1] == 'i') {
@@ -30,7 +30,7 @@ arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
                     args_dst->output_type = OUTPUT_FILE;
                     args_dst->output_val = args_src[i+1];
                 } else {
-                    return ERROR_UNKNOWN_OPTION;
+                    return PARSE_ERROR_UNKNOWN_OPTION;
                 }
             }
         }
@@ -38,7 +38,7 @@ arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
 
     // check if intput_type is provided, otherwise return error
     if (args_dst->input_type == INPUT_UNDEFINED) {
-        return ERROR_UNDEFINED_INPUT;
+        return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
     // chekc if output_type is provided, otherwise set msg
@@ -46,5 +46,5 @@ arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
         args_dst->output_type = OUTPUT_MSG;
     }
 
-    return SUCCESS;
+    return PARSE_SUCCESS;
 }

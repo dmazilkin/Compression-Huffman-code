@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "huffman.h"
 #include "arg_parser.h"
+#include "io.h"
+
+#define DEFAULT_SIZE 100
 
 int main(int argc, char* argv[]) {
     arg_t arguments = {
@@ -11,17 +15,32 @@ int main(int argc, char* argv[]) {
         .output_val = NULL,
     };
 
-    arg_parser_t status = arg_parser(argc, argv, &arguments);
-    if (status == ERROR_UNKNOWN_OPTION) {
-        printf("Error: %d! Unknown option!\n", status);
-        return ERROR_UNKNOWN_OPTION;
+    /* Parse command line arguments */
+    arg_parser_t status = parse_args(argc, argv, &arguments);
+
+    if (status == PARSE_ERROR_UNKNOWN_OPTION) {
+        printf("Error! Status code %d: Unknown option!\n", status);
+        return PARSE_ERROR_UNKNOWN_OPTION;
     }
 
-    printf("-------------------------------\n");
-    printf("-o --output type: %d\n", arguments.output_type);
-    printf("-o --output value: %s\n", arguments.output_val);
-    printf("-------------------------------\n");
-    printf("-i --input type: %d\n", arguments.input_type);
-    printf("-i --input value: %s\n", arguments.input_val);
+    if (status == PARSE_ERROR_UNDEFINED_INPUT) {
+      printf("Error! Status code %d: Undefined input!\n", status);
+      return PARSE_ERROR_UNDEFINED_INPUT;
+    }
+
+    /* Read input file content */
+    char* content = NULL;
+
+    if (arguments.input_type == INPUT_FILE) {
+        io_error_t status = read_file(arguments.input_val, &content);
+
+        if (status == FILE_READ_NOT_FOUND) {
+            printf("Error! Status code %d: File not found!\n", status);
+            return FILE_READ_NOT_FOUND;
+        }
+    }
+
+    printf("Content:\n%s\n", content);
+
     return 0;
 }
