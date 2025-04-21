@@ -5,6 +5,7 @@
 
 #define DEFAULT_SIZE 100
 
+/**************************** INTERFACE FUNCTIONS ****************************/
 io_error_t read_file(char* file_name, char** content) {
     *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
     int content_size = DEFAULT_SIZE;

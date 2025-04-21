@@ -1,8 +1,18 @@
 #ifndef HUFFMAN_H
 #define HUFFMAN_H
 
-void huffman_encode(void);
+typedef struct {
+    char ch;
+    int freq;
+} char_freq_t;
 
-void huffman_decode(void);
+typedef struct {
+    char_freq_t* frequencies;
+    int size;
+} freq_table_t;
+
+void huffman_encode(char* content);
+
+void huffman_decode(char* content);
 
 #endif //HUFFMAN_H

@@ -6,6 +6,7 @@
 #include "io.h"
 
 int main(int argc, char* argv[]) {
+    /* Parse command line arguments */
     arg_t arguments = {
         .input_type = INPUT_UNDEFINED,
         .input_val = NULL,
@@ -13,7 +14,6 @@ int main(int argc, char* argv[]) {
         .output_val = NULL,
     };
 
-    /* Parse command line arguments */
     arg_parser_t status = parse_args(argc, argv, &arguments);
 
     if (status == PARSE_ERROR_UNKNOWN_OPTION) {
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
       return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    /* Read input file content */
+    /* Read content to compress */
     char* content = NULL;
 
     if (arguments.input_type == INPUT_FILE) {
@@ -36,7 +36,12 @@ int main(int argc, char* argv[]) {
             printf("Error! Status code %d: File not found!\n", status);
             return FILE_READ_NOT_FOUND;
         }
+    } else {
+      content = arguments.input_val;
     }
+
+    /* Encode content */
+    huffman_encode(content);
 
     return 0;
 }
