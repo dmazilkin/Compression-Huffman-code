@@ -5,8 +5,6 @@
 #include "arg_parser.h"
 #include "io.h"
 
-#define DEFAULT_SIZE 100
-
 int main(int argc, char* argv[]) {
     arg_t arguments = {
         .input_type = INPUT_UNDEFINED,
@@ -39,8 +37,6 @@ int main(int argc, char* argv[]) {
             return FILE_READ_NOT_FOUND;
         }
     }
-
-    printf("Content:\n%s\n", content);
 
     return 0;
 }
