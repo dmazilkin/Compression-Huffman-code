@@ -2,27 +2,49 @@
 
 #include "arg_parser.h"
 
-arg_parser_t arg_parser(int argc, char* args_src[], char* args_dst[]) {
+/**************************** INTERFACE FUNCTIONS ****************************/
+arg_parser_t arg_parser(int argc, char* args_src[], arg_t* args_dst) {
     for (int i = 1; i < argc; i++) {
         if (args_src[i][0] == '-') {
             if (args_src[i][1] == '-') {
                 if (!strcmp(&args_src[i][2], "input")) {
-                    args_dst[INPUT] = args_src[i+1];
+                    args_dst->input_type = INPUT_FILE;
+                    args_dst->input_val = args_src[i+1];
+                } else if (!strcmp(&args_src[i][2], "msg")) {
+                    args_dst->input_type = INPUT_MSG;
+                    args_dst->input_val = args_src[i+1];
                 } else if (!strcmp(&args_src[i][2], "output")) {
-                    args_dst[OUTPUT] = args_src[i+1];
+                    args_dst->output_type = OUTPUT_FILE;
+                    args_dst->output_val = args_src[i+1];
                 } else {
                     return ERROR_UNKNOWN_OPTION;
                 }
             } else {
                 if (args_src[i][1] == 'i') {
-                    args_dst[INPUT] = args_src[i+1];
+                    args_dst->input_type = INPUT_FILE;
+                    args_dst->input_val = args_src[i+1];
+                } else if (!strcmp(&args_src[i][1], "m")) {
+                    args_dst->input_type = INPUT_MSG;
+                    args_dst->input_val = args_src[i+1];
                 } else if (args_src[i][1] == 'o') {
-                    args_dst[OUTPUT] = args_src[i+1];
+                    args_dst->output_type = OUTPUT_FILE;
+                    args_dst->output_val = args_src[i+1];
                 } else {
                     return ERROR_UNKNOWN_OPTION;
                 }
             }
         }
     }
+
+    // check if intput_type is provided, otherwise return error
+    if (args_dst->input_type == INPUT_UNDEFINED) {
+        return ERROR_UNDEFINED_INPUT;
+    }
+
+    // chekc if output_type is provided, otherwise set msg
+    if (args_dst->output_type == OUTPUT_UNDEFINED) {
+        args_dst->output_type = OUTPUT_MSG;
+    }
+
     return SUCCESS;
 }
