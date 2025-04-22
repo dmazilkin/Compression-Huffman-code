@@ -78,7 +78,7 @@ static int compare_freq_table(const void* elem1, const void* elem2) {
 }
 
 static huffman_tree_t make_huffman_tree(freq_table_t* freq_table) {
-  int tree_size = freq_table->size + freq_table->size / 2 + 1;
+  int tree_size = 2 * freq_table->size - 1;
   huffman_tree_node_t* nodes = (huffman_tree_node_t*)calloc(tree_size, sizeof(huffman_tree_node_t));
   huffman_tree_t tree = { .nodes = nodes, .size = tree_size };
 
@@ -89,14 +89,6 @@ static huffman_tree_t make_huffman_tree(freq_table_t* freq_table) {
     tree.nodes[i].code = -1;
   }
 
-//  for (int i = 0; i < tree_size; i++) {
-//    if (tree.nodes[i].is_leaf) {
-//      printf("%c: %d\n", (char)tree.nodes[i].ch, tree.nodes[i].freq);
-//    } else {
-//      printf("temp: %d\n", tree.nodes[i].freq);
-//    }
-//  }
-
   int empty_node_index = freq_table->size;
   for (int i = 0; i < tree_size-2; i+=2) {
     tree.nodes[empty_node_index].is_leaf = 0;
@@ -105,14 +97,6 @@ static huffman_tree_t make_huffman_tree(freq_table_t* freq_table) {
     tree.nodes[empty_node_index].code = -1;
     empty_node_index += 1;
     qsort(tree.nodes, empty_node_index, sizeof(huffman_tree_node_t), compare_tree_nodes);
-  }
-
-  for (int i = 0; i < tree_size; i++) {
-    if (tree.nodes[i].is_leaf) {
-      printf("%c: %d\n", (char)tree.nodes[i].ch, tree.nodes[i].freq);
-    } else {
-      printf("temp: %d\n", tree.nodes[i].freq);
-    }
   }
 
   return tree;
