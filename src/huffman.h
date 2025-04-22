@@ -14,15 +14,29 @@ typedef struct {
 
 typedef struct {
     char ch;
-    int is_leaf;
     int freq;
     int code;
+    int code_len;
+    void* left;
+    void* right;
 } huffman_tree_node_t;
 
 typedef struct {
     huffman_tree_node_t* nodes;
     int size;
+    int leaf_cout;
 } huffman_tree_t;
+
+typedef struct {
+    char ch;
+    int code;
+    int code_len;
+} huffman_code_t;
+
+typedef struct {
+  huffman_code_t* codes;
+  int size;
+} huffman_table_t;
 
 void huffman_encode(char* content);
 
