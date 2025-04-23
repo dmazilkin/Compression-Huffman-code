@@ -3,7 +3,7 @@
 
 #include "huffman.h"
 #include "arg_parser.h"
-#include "io.h"
+#include "file_utils.h"
 
 int main(int argc, char* argv[]) {
     /* Parse command line arguments */

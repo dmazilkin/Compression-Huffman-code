@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "io.h"
+#include "file_utils.h"
 
 #define DEFAULT_SIZE 100
 

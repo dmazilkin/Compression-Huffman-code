@@ -2,191 +2,24 @@
 #include <stdio.h>
 
 #include "huffman.h"
-
-#define ASCII_TABLE_SIZE 128
-#define COMBINED_CHARACTER 0
-#define UNDEFINED_CODE -1
-#define RIGHT_CODE 0
-#define LEFT_CODE 1
-
-static int look_up_table[128] = { 0 };
-
-/**************************** STATIC FUNCTION DECLARATIONS ****************************/
-static freq_table_t create_freq_table(char* content);
-
-static int compare_freq_table(const void* elem1, const void* elem2);
-
-static int compare_tree_nodes(const void* node1, const void* node2);
-
-static huff_tree_t make_huff_tree(freq_table_t* freq_table);
-
-static void set_node_code(huff_tree_node_t* node);
-
-static huff_table_t get_huff_table(huff_tree_t* tree, int leaf_count);
-
-static int compare_huff_code(const void* code1, const void* code2);
+#include "base_huffman.h"
+#include "canonical_huffman.h"
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-void huffman_encode(char* content) {
-  freq_table_t freq_table = create_freq_table(content);
-  huff_tree_t tree = make_huff_tree(&freq_table);
-  huff_table_t huff_table = get_huff_table(&tree, freq_table.size);
+void huffman_encode(char* content)
+{
+  freq_table_t freq_table = get_freq_table(content);
+  huff_tree_t tree = get_huff_tree(&freq_table);
+  huff_table_t huff_table = get_base_huff(&tree, freq_table.size);
+
+  canonical_huff_table_t canonical_huff_table = get_canonical_huff(&huff_table);
 
   return;
 }
 
-void huffman_decode(char* content) {
+void huffman_decode(char* content)
+{
   return;
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
-static freq_table_t create_freq_table(char* content) {
-  int ind = 0;
-  int unique_count = 0;
-  char ch = content[ind];
-
-  while (ch != '\0') {
-    if (look_up_table[(int)ch] == 0) {
-      unique_count++;
-    }
-    look_up_table[(int)ch] += 1;
-    ind++;
-    ch = content[ind];
-  }
-
-  freq_table_t freq_table = { .frequencies = NULL, .size = unique_count, .total_freq = 0 };
-  freq_table.frequencies = (char_freq_t*)calloc(unique_count, sizeof(char_freq_t));
-  ind = 0;
-
-  for (int i = 0; i < ASCII_TABLE_SIZE; i++) {
-    if (look_up_table[i] != 0) {
-      freq_table.frequencies[ind].ch = i;
-      freq_table.frequencies[ind].freq = look_up_table[i];
-      freq_table.total_freq += freq_table.frequencies[ind].freq;
-      ind++;
-    }
-  }
-
-  qsort(freq_table.frequencies, freq_table.size, sizeof(char_freq_t), compare_freq_table);
-
-  return freq_table;
-}
-
-static int compare_freq_table(const void* elem1, const void* elem2) {
-  char_freq_t* char1 = (char_freq_t*)elem1;
-  char_freq_t* char2 = (char_freq_t*)elem2;
-
-  if (char1->freq < char2->freq) {
-    return -1;
-  } else if (char1->freq > char2->freq) {
-    return 1;
-  } else {
-    if ((int)char1->ch < (int)char2->ch) {
-      return -1;
-    } else {
-      return 1;
-    }
-  }
-}
-
-static huff_tree_t make_huff_tree(freq_table_t* freq_table) {
-  int tree_size = 2 * freq_table->size - 1;
-  huff_tree_node_t* nodes = (huff_tree_node_t*)calloc(tree_size, sizeof(huff_tree_node_t));
-  huff_tree_t tree = { .nodes = nodes, .size = tree_size };
-
-  for (int i = 0; i < freq_table->size; i++) {
-    tree.nodes[i].ch = freq_table->frequencies[i].ch;
-    tree.nodes[i].freq = freq_table->frequencies[i].freq;
-    tree.nodes[i].code = UNDEFINED_CODE;
-    tree.nodes[i].left = NULL;
-    tree.nodes[i].right = NULL;
-  }
-
-  int empty_node_index = freq_table->size;
-
-  for (int i = 0; i < tree_size-2; i+=2) {
-    tree.nodes[empty_node_index].ch = COMBINED_CHARACTER;
-    tree.nodes[empty_node_index].freq = tree.nodes[i].freq + tree.nodes[i+1].freq;
-    tree.nodes[empty_node_index].code = UNDEFINED_CODE;
-    tree.nodes[empty_node_index].code_len = 0;
-    tree.nodes[empty_node_index].left = &tree.nodes[i];
-    tree.nodes[empty_node_index].right = &tree.nodes[i+1];
-    empty_node_index += 1;
-    qsort(tree.nodes, empty_node_index, sizeof(huff_tree_node_t), compare_tree_nodes);
-  }
-
-  huff_tree_node_t result_node = tree.nodes[tree_size - 1];
-  set_node_code(&result_node);
-
-  return tree;
-}
-
-static int compare_tree_nodes(const void* node1, const void* node2) {
-  huff_tree_node_t* tree_node1 = (huff_tree_node_t*)node1;
-  huff_tree_node_t* tree_node2 = (huff_tree_node_t*)node2;
-
-  if (tree_node1->freq < tree_node2->freq) {
-    return -1;
-  } else {
-    return 1;
-  }
-}
-
-static void set_node_code(huff_tree_node_t* node) {
-  huff_tree_node_t* left = (huff_tree_node_t*)node->left;
-  huff_tree_node_t* right = (huff_tree_node_t*)node->right;
-
-  if ((left != NULL) && (right != NULL)) {
-    if (node->code != UNDEFINED_CODE) {
-      left->code = (node->code << 1) | LEFT_CODE;
-      left->code_len += node->code_len + 1;
-      right->code = (node->code << 1) | RIGHT_CODE;
-      right->code_len += node->code_len + 1;
-    } else {
-      left->code = LEFT_CODE;
-      left->code_len = 1;
-      right->code = RIGHT_CODE;
-      right->code_len = 1;
-    }
-    set_node_code(left);
-    set_node_code(right);
-  }
-
-  return;
-}
-
-static huff_table_t get_huff_table(huff_tree_t* tree, int leaf_count) {
-  huff_code_t* huffman_code = (huff_code_t*)calloc(leaf_count, sizeof(huff_code_t));
-  huff_table_t huffman_table = { .codes = huffman_code, .size = leaf_count };
-  int ind = 0;
-
-  for (int i = 0; i < tree->size; i++) {
-     if (tree->nodes[i].left == NULL && tree->nodes[i].right == NULL) {
-        huffman_code[ind].ch = tree->nodes[i].ch;
-        huffman_code[ind].code = tree->nodes[i].code;
-        huffman_code[ind].code_len = tree->nodes[i].code_len;
-        ind++;
-      }
-  }
-
-  qsort(huffman_table.codes, huffman_table.size, sizeof(huff_code_t), compare_huff_code);
-
-  return huffman_table;
-}
-
-static int compare_huff_code(const void* code1, const void* code2) {
-  huff_code_t* huff_code1 = (huff_code_t*)code1;
-  huff_code_t* huff_code2 = (huff_code_t*)code2;
-
-  if (huff_code1->code_len < huff_code2->code_len) {
-    return -1;
-  } else if (huff_code1->code_len > huff_code2->code_len) {
-    return 1;
-  } else {
-    if (huff_code1->ch < huff_code2->ch) {
-      return -1;
-    } else {
-      return 1;
-    }
-  }
-}
