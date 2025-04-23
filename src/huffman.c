@@ -24,6 +24,8 @@ static void set_node_code(huffman_tree_node_t* node);
 
 static huffman_table_t get_huffman_table(huffman_tree_t* tree, int leaf_count);
 
+static int compare_huffman_code(const void* code1, const void* code2);
+
 /**************************** INTERFACE FUNCTIONS ****************************/
 void huffman_encode(char* content) {
   freq_table_t freq_table = create_freq_table(content);
@@ -167,5 +169,24 @@ static huffman_table_t get_huffman_table(huffman_tree_t* tree, int leaf_count) {
       }
   }
 
+  qsort(huffman_table.codes, huffman_table.size, sizeof(huffman_code_t), compare_huffman_code);
+
   return huffman_table;
+}
+
+static int compare_huffman_code(const void* code1, const void* code2) {
+  huffman_code_t* huff_code1 = (huffman_code_t*)code1;
+  huffman_code_t* huff_code2 = (huffman_code_t*)code2;
+
+  if (huff_code1->code_len < huff_code2->code_len) {
+    return -1;
+  } else if (huff_code1->code_len > huff_code2->code_len) {
+    return 1;
+  } else {
+    if (huff_code1->ch < huff_code2->ch) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
 }
