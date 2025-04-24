@@ -44,8 +44,7 @@ int main(int argc, char* argv[]) {
     canonical_huff_table_t huff = huffman_encode(content);
 
     /* Write Huffman code to file */
-    char* encoded_text = NULL;
-    write_to_file(&huff, content, &encoded_text, arguments.output_val);
+    write_to_file(&huff, content, arguments.output_val);
 
     return 0;
 }

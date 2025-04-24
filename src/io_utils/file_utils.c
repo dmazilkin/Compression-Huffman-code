@@ -35,10 +35,13 @@ file_status_t read_from_file(char* file_name, char** content) {
     return FILE_READ_SUCCESS;
 }
 
-file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char** encoded_text, char* file_name)
+file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
 {
     int chr_ind = 0;
     char chr = content[chr_ind];
+    char* encoded_text = (char*)calloc(DEFAULT_SIZE, sizeof(char));
+    int encoded_ind = 0;
+    int encoded_size = DEFAULT_SIZE;
 
     while (chr != '\0') {
         int code = -1;
@@ -51,22 +54,18 @@ file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char** 
               }
         }
 
-        char* encoded_char = (char*)calloc(code_len + 1, sizeof(char));
-        for (int i = 0; i < code_len; i++) {
-            encoded_char[i] = code & (1 << i) ? '1' : '0';
-//            printf("%c", encoded_char[i]);
+        if (code_len + encoded_ind + 1 > encoded_size) {
+            encoded_text = (char*)realloc(encoded_text, 2 * encoded_size * sizeof(char));
         }
-//        printf("\n");
 
-        printf("%c: ", chr);
-        for (int i = code_len - 1; i >= 0; i--) {
-          printf("%c", encoded_char[i]);
+        for (int i = 0; i < code_len; i++) {
+            int char_ind = i + encoded_ind;
+            encoded_text[char_ind] = code & (1 << i) ? '1' : '0';
         }
-        printf("\n");
-//        printf(": code=%d, len=%d\n", code, code_len);
+        encoded_ind += code_len;
+
         chr_ind++;
         chr = content[chr_ind];
-
     }
 
     return FILE_WRITE_SUCCESS;
