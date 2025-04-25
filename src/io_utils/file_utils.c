@@ -58,15 +58,16 @@ file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* f
             encoded_text = (char*)realloc(encoded_text, 2 * encoded_size * sizeof(char));
         }
 
-        for (int i = 0; i < code_len; i++) {
-            int char_ind = i + encoded_ind;
-            encoded_text[char_ind] = code & (1 << i) ? '1' : '0';
+        for (int i = code_len - 1; i >= 0; i--) {
+            encoded_text[encoded_ind + code_len - i - 1] = code & (1 << i) ? '1' : '0';
         }
-        encoded_ind += code_len;
 
+        encoded_ind += code_len;
         chr_ind++;
         chr = content[chr_ind];
     }
+
+    printf("%s\n", encoded_text);
 
     return FILE_WRITE_SUCCESS;
 }
