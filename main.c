@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     char* content = NULL;
 
     if (arguments.input_type == INPUT_FILE) {
-        io_error_t status = read_file(arguments.input_val, &content);
+        file_status_t status = read_from_file(arguments.input_val, &content);
 
         if (status == FILE_READ_NOT_FOUND) {
             printf("Error! Status code %d: File not found!\n", status);
@@ -41,7 +41,10 @@ int main(int argc, char* argv[]) {
     }
 
     /* Encode content */
-    huffman_encode(content);
+    canonical_huff_table_t huff = huffman_encode(content);
+
+    /* Write Huffman code to file */
+    write_to_file(&huff, content, arguments.output_val);
 
     return 0;
 }

@@ -16,7 +16,7 @@ canonical_huff_table_t get_canonical_huff(huff_table_t* huff_table)
 
     canonical_huff.codes[0].chr = huff_table->codes[0].chr;
     canonical_huff.codes[0].code = START_CODE;
-    canonical_huff.codes[0].code_len = START_CODE_LEN;
+    canonical_huff.codes[0].code_len = huff_table->codes[0].code_len;
 
     for (int i = 1; i < size; i++) {
         canonical_huff.codes[i].chr = huff_table->codes[i].chr;
