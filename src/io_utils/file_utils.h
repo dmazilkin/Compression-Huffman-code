@@ -10,6 +10,11 @@ typedef enum {
   FILE_WRITE_ERROR,
 } file_status_t;
 
+typedef struct {
+  char* data;
+  int count;
+} reformatting_data_t;
+
 file_status_t read_from_file(char* file_name, char** content);
 
 file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* file_name);

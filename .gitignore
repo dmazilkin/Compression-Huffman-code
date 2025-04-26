@@ -1,2 +1,5 @@
 build/
 .idea/
+output/
+.DS_Store
+*.py

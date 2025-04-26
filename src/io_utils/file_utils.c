@@ -5,8 +5,10 @@
 
 /**************************** DEFINES ****************************/
 #define DEFAULT_SIZE 100
+#define BYTE_SIZE 8
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
+reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
 file_status_t read_from_file(char* file_name, char** content) {
@@ -37,10 +39,37 @@ file_status_t read_from_file(char* file_name, char** content) {
 
 file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
 {
+    reformatting_data_t reformatting_data = get_reformatting_data(huff, content);
+
+    FILE* file = fopen(file_name, "w+");
+
+    if (file == NULL) {
+      return FILE_WRITE_ERROR;
+    }
+
+
+    for (int i = 0; i < reformatting_data.count / BYTE_SIZE; i++) {
+        unsigned char byte_to_write = 0b0;
+
+      for (int j = 0; j < BYTE_SIZE; j++) {
+        unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
+        byte_to_write |= byte;
+      }
+
+      fwrite(&byte_to_write, sizeof(char), 1, file);
+    }
+
+    fclose(file);
+
+    return FILE_WRITE_SUCCESS;
+}
+
+/**************************** STATIC FUNCTIONS ****************************/
+reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content)
+{
     int chr_ind = 0;
     char chr = content[chr_ind];
-    char* encoded_text = (char*)calloc(DEFAULT_SIZE, sizeof(char));
-    int encoded_ind = 0;
+    reformatting_data_t encoded_text = { .data=(char*)calloc(DEFAULT_SIZE, sizeof(char)), .count = 0 };
     int encoded_size = DEFAULT_SIZE;
 
     while (chr != '\0') {
@@ -51,25 +80,21 @@ file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* f
                 code = huff->codes[i].code;
                 code_len = huff->codes[i].code_len;
                 i = huff->size;
-              }
+            }
         }
 
-        if (code_len + encoded_ind + 1 > encoded_size) {
-            encoded_text = (char*)realloc(encoded_text, 2 * encoded_size * sizeof(char));
+        if (code_len + encoded_text.count + 1 > encoded_size) {
+            encoded_text.data = (char*)realloc(encoded_text.data, 2 * encoded_size * sizeof(char));
         }
 
         for (int i = code_len - 1; i >= 0; i--) {
-            encoded_text[encoded_ind + code_len - i - 1] = code & (1 << i) ? '1' : '0';
+            encoded_text.data[encoded_text.count + code_len - i - 1] = code & (1 << i) ? '1' : '0';
         }
 
-        encoded_ind += code_len;
+        encoded_text.count += code_len;
         chr_ind++;
         chr = content[chr_ind];
     }
 
-    printf("%s\n", encoded_text);
-
-    return FILE_WRITE_SUCCESS;
+    return encoded_text;
 }
-
-/**************************** STATIC FUNCTIONS ****************************/
