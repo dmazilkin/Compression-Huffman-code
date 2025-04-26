@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
         .input_val = NULL,
         .output_type = OUTPUT_UNDEFINED,
         .output_val = NULL,
+        .operation = OPERATION_UNDEFINED,
     };
 
     arg_parser_t status = parse_args(argc, argv, &arguments);
@@ -40,11 +41,16 @@ int main(int argc, char* argv[]) {
       content = arguments.input_val;
     }
 
-    /* Encode content */
-    canonical_huff_table_t huff = huffman_encode(content);
-
-    /* Write Huffman code to file */
-    write_to_file(&huff, content, arguments.output_val);
+    /* Compression operation */
+    if (arguments.operation == COMPRESSION) {
+        /* Encode content */
+        canonical_huff_table_t huff = huffman_encode(content);
+        /* Write Huffman code to file */
+        write_to_file(&huff, content, arguments.output_val);
+    /* Decomression operation */
+    } else {
+        huffman_decode(content);
+    }
 
     return 0;
 }
