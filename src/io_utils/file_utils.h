@@ -15,8 +15,17 @@ typedef struct {
   int count;
 } reformatting_data_t;
 
+typedef struct {
+  char chr;
+  char* code;
+} metadata_t;
+
 file_status_t read_from_file(char* file_name, char** content);
 
-file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* file_name);
+file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name);
+
+file_status_t save_metadata(canonical_huff_table_t* huff);
+
+file_status_t read_metadata(reformatting_data_t* metadata);
 
 #endif //IO_H

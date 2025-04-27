@@ -4,6 +4,7 @@
 #include "huffman.h"
 #include "base_huffman.h"
 #include "canonical_huffman.h"
+#include "file_utils.h"
 
 /**************************** INTERFACE FUNCTIONS ****************************/
 canonical_huff_table_t huffman_encode(char* content)
@@ -16,7 +17,7 @@ canonical_huff_table_t huffman_encode(char* content)
   return canonical_huff_table;
 }
 
-void huffman_decode(char* content)
+void huffman_decode(reformatting_data_t* metadata)
 {
   return;
 }

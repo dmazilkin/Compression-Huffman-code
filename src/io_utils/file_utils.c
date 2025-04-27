@@ -6,9 +6,10 @@
 /**************************** DEFINES ****************************/
 #define DEFAULT_SIZE 100
 #define BYTE_SIZE 8
+#define METADATA ".metadata"
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
-reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content);
+static reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
 file_status_t read_from_file(char* file_name, char** content) {
@@ -37,16 +38,15 @@ file_status_t read_from_file(char* file_name, char** content) {
     return FILE_READ_SUCCESS;
 }
 
-file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
+file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
 {
     reformatting_data_t reformatting_data = get_reformatting_data(huff, content);
 
-    FILE* file = fopen(file_name, "w+");
+    FILE* file = fopen(file_name, "w");
 
     if (file == NULL) {
       return FILE_WRITE_ERROR;
     }
-
 
     for (int i = 0; i < reformatting_data.count / BYTE_SIZE; i++) {
         unsigned char byte_to_write = 0b0;
@@ -64,8 +64,64 @@ file_status_t write_to_file(canonical_huff_table_t* huff, char* content, char* f
     return FILE_WRITE_SUCCESS;
 }
 
+file_status_t save_metadata(canonical_huff_table_t* huff)
+{
+    FILE* file = fopen(".metadata", "w");
+
+    if (file == NULL) {
+      return FILE_WRITE_ERROR;
+    }
+
+    metadata_t* metadata = (metadata_t*)calloc(huff->size, sizeof(metadata_t));
+
+    for (int i = 0; i < huff->size; i++) {
+        metadata[i].chr = huff->codes[i].chr;
+        metadata[i].code = (char*)calloc(huff->codes[i].code_len, sizeof(char));
+
+        for (int j = 0; j < huff->codes[i].code_len; j++) {
+            metadata[i].code[huff->codes[i].code_len - j - 1] = huff->codes[i].code & (1 << j) ? '1' : '0';
+        }
+
+        fwrite(&metadata[i].chr, sizeof(char), 1, file);
+        fprintf(file, "[%d]", huff->codes[i].code_len);
+        fwrite(metadata[i].code, sizeof(char), huff->codes[i].code_len, file);
+    }
+
+    fclose(file);
+
+    return FILE_WRITE_SUCCESS;
+}
+
+file_status_t read_metadata(reformatting_data_t* metadata)
+{
+    FILE* file = fopen(METADATA, "r");
+
+    if (file == NULL) {
+      return FILE_READ_NOT_FOUND;
+    }
+
+    char chr = fgetc(file);
+    int code_len = 0;
+    fscanf(file, "[%d]", &code_len);
+
+    while (chr != EOF) {
+        metadata[(int)chr].data = (char*)calloc(code_len, sizeof(char));
+        metadata[(int)chr].count = code_len;
+
+        for (int i = 0; i < code_len; i++) {
+            metadata[(int)chr].data[i] = fgetc(file);
+        }
+
+        chr = fgetc(file);
+        code_len = 0;
+        fscanf(file, "[%d]", &code_len);
+    }
+
+    return FILE_READ_SUCCESS;
+}
+
 /**************************** STATIC FUNCTIONS ****************************/
-reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content)
+static reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content)
 {
     int chr_ind = 0;
     char chr = content[chr_ind];
@@ -75,6 +131,7 @@ reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* co
     while (chr != '\0') {
         int code = -1;
         int code_len = -1;
+
         for (int i = 0; i < huff->size; i++) {
             if (huff->codes[i].chr == chr) {
                 code = huff->codes[i].code;

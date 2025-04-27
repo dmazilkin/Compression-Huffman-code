@@ -5,6 +5,10 @@
 #include "arg_parser.h"
 #include "file_utils.h"
 
+/**************************** DEFINES ****************************/
+#define ASCII_SIZE 128
+
+/**************************** STATIC FUNCTION DECLARATIONS ****************************/
 int main(int argc, char* argv[]) {
     /* Parse command line arguments */
     arg_t arguments = {
@@ -46,10 +50,26 @@ int main(int argc, char* argv[]) {
         /* Encode content */
         canonical_huff_table_t huff = huffman_encode(content);
         /* Write Huffman code to file */
-        write_to_file(&huff, content, arguments.output_val);
+        save_encoded_to_file(&huff, content, arguments.output_val);
+        /* Save metadata to file */
+        save_metadata(&huff);
     /* Decomression operation */
     } else {
-        huffman_decode(content);
+        reformatting_data_t* metadata = (reformatting_data_t*)calloc(ASCII_SIZE, sizeof(reformatting_data_t));
+        read_metadata(metadata);
+
+//TODO: REMOVE
+//        for (char i = 0; i < ASCII_SIZE - 1; i++) {
+//            if (metadata[i].count) {
+//              printf("char=%c: ", i);
+//                for (int j = 0; j < metadata[i].count; j++) {
+//                    printf("%c", metadata[i].data[j]);
+//                }
+//                printf("\n");
+//            }
+//        }
+
+        huffman_decode(metadata);
     }
 
     return 0;
