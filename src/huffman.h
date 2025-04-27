@@ -6,6 +6,6 @@
 
 canonical_huff_table_t huffman_encode(char* content);
 
-void huffman_decode(char* content, decode_metadata_t* metadata, char** decoded_content);
+decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len);
 
 #endif //HUFFMAN_H

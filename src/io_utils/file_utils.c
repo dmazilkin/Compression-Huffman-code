@@ -5,7 +5,7 @@
 #include "file_utils.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 128
+#define DEFAULT_SIZE 16
 #define BYTE_SIZE 8
 #define METADATA ".metadata"
 
@@ -24,6 +24,34 @@ file_status_t read_from_file(char* file_name, char** content, operation_t option
     } else {
         return read_to_decode(file_name, content);
     }
+}
+
+file_status_t read_content_to_decode(char* file_name, read_content_t* read_content)
+{
+    if (read_content->file == NULL) {
+        read_content->file = fopen(file_name, "r");
+    }
+
+    int chr = fgetc(read_content->file);
+    int ind = 0;
+
+    while ((ind < DEFAULT_SIZE) & (chr != EOF)) {
+        for (int i = 0; i < BYTE_SIZE; i++) {
+            read_content->content[ind] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
+            ind++;
+        }
+
+        chr = fgetc(read_content->file);
+    }
+
+    if (chr == EOF) {
+      read_content->is_eof = 1;
+      fclose(read_content->file);
+    }
+
+    read_content->content_size = ind;
+
+    return FILE_READ_SUCCESS;
 }
 
 file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* file_name)
@@ -62,7 +90,9 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
         fwrite(&byte_to_write, sizeof(char), 1, file);
     }
 
-    huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
+    if (reformatting_data.count % BYTE_SIZE) {
+        huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
+    }
 
     fclose(file);
 
@@ -132,15 +162,15 @@ file_status_t read_metadata(decode_metadata_t* metadata)
     return FILE_READ_SUCCESS;
 }
 
-file_status_t save_decoded(char* content, char* file_name)
+file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content)
 {
-    FILE* file = fopen(file_name, "w");
+    FILE* file = fopen(file_name, "a+");
 
     if (file == NULL) {
       return FILE_WRITE_ERROR;
     }
 
-    fwrite(content, sizeof(char), strlen(content), file);
+    fwrite(decoded_content->content, sizeof(char), decoded_content->content_size, file);
 
     return FILE_WRITE_SUCCESS;
 }
