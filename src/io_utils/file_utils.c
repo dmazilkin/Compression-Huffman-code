@@ -5,7 +5,7 @@
 #include "file_utils.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 100
+#define DEFAULT_SIZE 128
 #define BYTE_SIZE 8
 #define METADATA ".metadata"
 
@@ -39,13 +39,30 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
     for (int i = 0; i < reformatting_data.count / BYTE_SIZE; i++) {
         unsigned char byte_to_write = 0b0;
 
-      for (int j = 0; j < BYTE_SIZE; j++) {
-        unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
-        byte_to_write |= byte;
-      }
+        for (int j = 0; j < BYTE_SIZE; j++) {
+            unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
+            byte_to_write |= byte;
+        }
 
-      fwrite(&byte_to_write, sizeof(char), 1, file);
+        fwrite(&byte_to_write, sizeof(char), 1, file);
     }
+
+    int rest_ind = reformatting_data.count / BYTE_SIZE;
+    unsigned char byte_to_write = 0b0;
+
+    printf("rest_ind=%d\n", rest_ind);
+    printf("to shift=%d\n", reformatting_data.count % BYTE_SIZE);
+
+    if (reformatting_data.count % BYTE_SIZE) {
+        for (int j = 0; j < reformatting_data.count % BYTE_SIZE; j++) {
+            unsigned char byte = ((reformatting_data.data[rest_ind * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
+            byte_to_write |= byte;
+        }
+
+        fwrite(&byte_to_write, sizeof(char), 1, file);
+    }
+
+    huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
 
     fclose(file);
 
@@ -60,11 +77,15 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
       return FILE_WRITE_ERROR;
     }
 
-    encode_metadata_t* metadata = (encode_metadata_t*)calloc(huff->size, sizeof(encode_metadata_t));
+//    encode_metadata_t* metadata = (encode_metadata_t*)calloc(huff->size, sizeof(encode_metadata_t));
+    encode_metadata_t metadata[huff->size];
+
+    fprintf(file, "shift[%d]", huff->shift);
 
     for (int i = 0; i < huff->size; i++) {
         metadata[i].chr = huff->codes[i].chr;
-        metadata[i].code = (char*)calloc(huff->codes[i].code_len, sizeof(char));
+        char code[huff->codes[i].code_len];
+        metadata[i].code = code;
 
         for (int j = 0; j < huff->codes[i].code_len; j++) {
             metadata[i].code[huff->codes[i].code_len - j - 1] = huff->codes[i].code & (1 << j) ? '1' : '0';
@@ -87,6 +108,10 @@ file_status_t read_metadata(decode_metadata_t* metadata)
     if (file == NULL) {
       return FILE_READ_NOT_FOUND;
     }
+
+    int shift = 0;
+    fscanf(file, "shift[%d]", &shift);
+    metadata->shift = shift;
 
     char chr = fgetc(file);
     int code_len = 0;
@@ -122,8 +147,8 @@ file_status_t save_decoded(char* content, char* file_name)
 
 /**************************** STATIC FUNCTIONS ****************************/
 static file_status_t read_to_encode(char* file_name, char** content) {
-    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
     int content_size = DEFAULT_SIZE;
+    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
 
     FILE* file = fopen(file_name, "r");
 
@@ -136,7 +161,7 @@ static file_status_t read_to_encode(char* file_name, char** content) {
 
     while (symb != EOF) {
         if (ind >= content_size - 1) {
-            content_size *= 2;
+            content_size += DEFAULT_SIZE;
             *content = (char*)realloc(*content, content_size * sizeof(char));
         }
         *(*content+ind) = (char)symb;
@@ -149,7 +174,8 @@ static file_status_t read_to_encode(char* file_name, char** content) {
 
 static file_status_t read_to_decode(char* file_name, char** content)
 {
-    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
+    int content_size = DEFAULT_SIZE;
+    *content = (char*)calloc(content_size, sizeof(char));
 
     FILE* file = fopen(file_name, "r");
 
@@ -157,13 +183,18 @@ static file_status_t read_to_decode(char* file_name, char** content)
         return FILE_READ_NOT_FOUND;
     }
 
-    char chr = fgetc(file);
+    int chr = fgetc(file);
     int ind = 0;
 
     while (chr != EOF) {
       for (int i = 0; i < BYTE_SIZE; i++) {
         (*content)[ind] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
         ind++;
+
+        if (ind >= content_size - 1) {
+          content_size += DEFAULT_SIZE;
+          *content = (char*)realloc(*content, content_size * sizeof(char));
+        }
       }
 
       chr = fgetc(file);

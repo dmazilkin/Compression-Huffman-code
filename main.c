@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "huffman.h"
 #include "arg_parser.h"
@@ -56,17 +57,19 @@ int main(int argc, char* argv[]) {
     /* Decomression operation */
     } else {
         /* Read metadata for decoding */
-        decode_metadata_t* metadata = (decode_metadata_t*)calloc(ASCII_SIZE, sizeof(decode_metadata_t));
+//        decode_metadata_t* metadata = (decode_metadata_t*)calloc(ASCII_SIZE, sizeof(decode_metadata_t));
+        decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0} };
         read_metadata(metadata);
         for (int i = 0; i < ASCII_SIZE; i++) {
           if (metadata[i].code_len != 0) {
                 printf("%c: code=%d, len=%d\n", i, metadata[i].code, metadata[i].code_len);
             }
         }
-        printf("------------\n");
         /* Read content */
         char* content = NULL;
         file_status_t status = read_from_file(arguments.input_val, &content, arguments.operation);
+        printf("Content: %lu\n", strlen(content));
+
         /* Decode content */
         char* decoded_content = NULL;
         huffman_decode(content, metadata, &decoded_content);
