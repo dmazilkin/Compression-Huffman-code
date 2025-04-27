@@ -5,7 +5,7 @@
 #include "file_utils.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 16
+#define DEFAULT_SIZE 8
 #define BYTE_SIZE 8
 #define METADATA ".metadata"
 
@@ -41,7 +41,9 @@ file_status_t read_content_to_decode(char* file_name, read_content_t* read_conte
             ind++;
         }
 
-        chr = fgetc(read_content->file);
+        if (!(ind >= DEFAULT_SIZE)) {
+            chr = fgetc(read_content->file);
+        }
     }
 
     if (chr == EOF) {
@@ -77,9 +79,6 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
 
     int rest_ind = reformatting_data.count / BYTE_SIZE;
     unsigned char byte_to_write = 0b0;
-
-    printf("rest_ind=%d\n", rest_ind);
-    printf("to shift=%d\n", reformatting_data.count % BYTE_SIZE);
 
     if (reformatting_data.count % BYTE_SIZE) {
         for (int j = 0; j < reformatting_data.count % BYTE_SIZE; j++) {

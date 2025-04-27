@@ -8,7 +8,7 @@
 
 /**************************** DEFINES ****************************/
 #define ASCII_SIZE 128
-#define DEFAULT_SIZE 16
+#define DEFAULT_SIZE 8
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 int main(int argc, char* argv[]) {
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     /* Decomression operation */
     } else {
         /* Read metadata for decoding */
-        decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0} };
+        decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0 } };
         read_metadata(metadata);
 
         char data[DEFAULT_SIZE] = { 0 };
@@ -68,9 +68,6 @@ int main(int argc, char* argv[]) {
 
         while (read_content.is_eof != 1) {
             read_content_to_decode(arguments.input_val, &read_content);
-            for (int i = 0; i < read_content.content_size; i++) {
-                printf("%c", read_content.content[i]);
-            }
             /* Decode content */
             char encoded_data[DEFAULT_SIZE] = { 0 };
             decoded_content_t decoded_content = huffman_decode(read_content, metadata, encoded_data, undecoded_code, undecoded_code_len);
