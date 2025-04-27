@@ -28,10 +28,12 @@ typedef struct {
 
 file_status_t read_from_file(char* file_name, char** content, operation_t option);
 
-file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name);
+file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* file_name);
 
 file_status_t save_metadata(canonical_huff_table_t* huff);
 
 file_status_t read_metadata(decode_metadata_t* metadata);
+
+file_status_t save_decoded(char* content, char* file_name);
 
 #endif //IO_H

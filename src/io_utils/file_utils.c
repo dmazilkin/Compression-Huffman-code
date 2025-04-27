@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "file_utils.h"
 
@@ -25,7 +26,7 @@ file_status_t read_from_file(char* file_name, char** content, operation_t option
     }
 }
 
-file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
+file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* file_name)
 {
     reformatting_data_t reformatting_data = reformate_encoded_data(huff, content);
 
@@ -104,6 +105,19 @@ file_status_t read_metadata(decode_metadata_t* metadata)
     }
 
     return FILE_READ_SUCCESS;
+}
+
+file_status_t save_decoded(char* content, char* file_name)
+{
+    FILE* file = fopen(file_name, "w");
+
+    if (file == NULL) {
+      return FILE_WRITE_ERROR;
+    }
+
+    fwrite(content, sizeof(char), strlen(content), file);
+
+    return FILE_WRITE_SUCCESS;
 }
 
 /**************************** STATIC FUNCTIONS ****************************/

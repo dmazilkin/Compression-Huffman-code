@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
         /* Encode content */
         canonical_huff_table_t huff = huffman_encode(content);
         /* Write Huffman code to file */
-        save_encoded_to_file(&huff, content, arguments.output_val);
+        save_encoded(&huff, content, arguments.output_val);
         /* Save metadata to file */
         save_metadata(&huff);
     /* Decomression operation */
@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
         /* Decode content */
         char* decoded_content = NULL;
         huffman_decode(content, metadata, &decoded_content);
-        printf("Decoded content: %s\n", decoded_content);
+        save_decoded(decoded_content, arguments.output_val);
     }
 
     return 0;
