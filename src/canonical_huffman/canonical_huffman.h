@@ -12,6 +12,7 @@ typedef struct {
 typedef struct {
     canonical_huff_code_t* codes;
     int size;
+    int shift;
 } canonical_huff_table_t;
 
 canonical_huff_table_t get_canonical_huff(huff_table_t* huff_table);

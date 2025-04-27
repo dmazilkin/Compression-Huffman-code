@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
   int code;
   int code_len;
+  int shift;
 } decode_metadata_t;
 
 file_status_t read_from_file(char* file_name, char** content, operation_t option);

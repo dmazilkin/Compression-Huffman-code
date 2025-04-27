@@ -42,7 +42,7 @@ void huffman_decode(char* content, decode_metadata_t* metadata, char** decoded_c
     printf("Try to decode: code=%d, len=%d\n", code, code_len);
 
     for (char i = 0; i < ASCII_SIZE - 1; i++) {
-      if ((code == metadata[i].code) && (code_len == metadata[i].code_len) && (metadata[i].code_len != 0)) {
+      if ((code == metadata[(int)i].code) && (code_len == metadata[(int)i].code_len) && (metadata[(int)i].code_len != 0)) {
         (*decoded_content)[decoded_ind] = i;
         printf("Decoded: %c!\n", i);
         decoded_ind++;
@@ -50,8 +50,14 @@ void huffman_decode(char* content, decode_metadata_t* metadata, char** decoded_c
         code_len = 0;
       }
     }
+
     content_ind++;
     chr = content[content_ind];
+  }
+
+  printf("shift=%d\n", (*metadata).shift);
+  if ((*metadata).shift) {
+    *decoded_content = (char*)realloc(*decoded_content, (decoded_ind - (*metadata).shift) * sizeof(char));
   }
 
   return;

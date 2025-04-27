@@ -39,13 +39,30 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
     for (int i = 0; i < reformatting_data.count / BYTE_SIZE; i++) {
         unsigned char byte_to_write = 0b0;
 
-      for (int j = 0; j < BYTE_SIZE; j++) {
-        unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
-        byte_to_write |= byte;
-      }
+        for (int j = 0; j < BYTE_SIZE; j++) {
+            unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
+            byte_to_write |= byte;
+        }
 
-      fwrite(&byte_to_write, sizeof(char), 1, file);
+        fwrite(&byte_to_write, sizeof(char), 1, file);
     }
+
+    int rest_ind = reformatting_data.count / BYTE_SIZE;
+    unsigned char byte_to_write = 0b0;
+
+    printf("rest_ind=%d\n", rest_ind);
+    printf("to shift=%d\n", reformatting_data.count % BYTE_SIZE);
+
+    if (reformatting_data.count % BYTE_SIZE) {
+        for (int j = 0; j < reformatting_data.count % BYTE_SIZE; j++) {
+            unsigned char byte = ((reformatting_data.data[rest_ind * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
+            byte_to_write |= byte;
+        }
+
+        fwrite(&byte_to_write, sizeof(char), 1, file);
+    }
+
+    huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
 
     fclose(file);
 
@@ -61,6 +78,8 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
     }
 
     encode_metadata_t* metadata = (encode_metadata_t*)calloc(huff->size, sizeof(encode_metadata_t));
+
+    fprintf(file, "shift[%d]", huff->shift);
 
     for (int i = 0; i < huff->size; i++) {
         metadata[i].chr = huff->codes[i].chr;
@@ -87,6 +106,10 @@ file_status_t read_metadata(decode_metadata_t* metadata)
     if (file == NULL) {
       return FILE_READ_NOT_FOUND;
     }
+
+    int shift = 0;
+    fscanf(file, "shift[%d]", &shift);
+    metadata->shift = shift;
 
     char chr = fgetc(file);
     int code_len = 0;
