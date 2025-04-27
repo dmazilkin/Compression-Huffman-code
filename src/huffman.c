@@ -7,7 +7,7 @@
 #include "file_utils.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 100
+#define DEFAULT_SIZE 128
 #define ASCII_SIZE 128
 #define BYTE_SIZE 8
 
@@ -25,7 +25,8 @@ canonical_huff_table_t huffman_encode(char* content)
 void huffman_decode(char* content, decode_metadata_t* metadata, char** decoded_content)
 {
   int decoded_ind = 0;
-  *decoded_content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
+  int decoded_size = DEFAULT_SIZE;
+  *decoded_content = (char*)calloc(decoded_size, sizeof(char));
 
   int content_ind = 0;
   char chr = content[0];
@@ -44,18 +45,25 @@ void huffman_decode(char* content, decode_metadata_t* metadata, char** decoded_c
     for (char i = 0; i < ASCII_SIZE - 1; i++) {
       if ((code == metadata[(int)i].code) && (code_len == metadata[(int)i].code_len) && (metadata[(int)i].code_len != 0)) {
         (*decoded_content)[decoded_ind] = i;
+        content[decoded_ind] = i;
         printf("Decoded: %c!\n", i);
         decoded_ind++;
         code = 0;
         code_len = 0;
+
+        if (decoded_ind >= decoded_size - 1) {
+          decoded_size += DEFAULT_SIZE;
+          printf("size = %d\n", decoded_size);
+          *decoded_content = (char*)realloc(decoded_content, decoded_size * sizeof(char));
+        }
       }
     }
 
     content_ind++;
     chr = content[content_ind];
   }
-
-  printf("shift=%d\n", (*metadata).shift);
+  printf("size=%d\n", decoded_ind);
+//  printf("shift=%d\n", (*metadata).shift);
   if ((*metadata).shift) {
     *decoded_content = (char*)realloc(*decoded_content, (decoded_ind - (*metadata).shift) * sizeof(char));
   }
