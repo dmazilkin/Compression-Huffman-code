@@ -29,6 +29,10 @@ arg_parser_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
                 } else if (args_src[i][1] == 'o') {
                     args_dst->output_type = OUTPUT_FILE;
                     args_dst->output_val = args_src[i+1];
+                } else if (args_src[i][1] == 'c') {
+                    args_dst->operation = COMPRESSION;
+                } else if (args_src[i][1] == 'd') {
+                    args_dst->operation = DECOMPRESSION;
                 } else {
                     return PARSE_ERROR_UNKNOWN_OPTION;
                 }
@@ -41,9 +45,14 @@ arg_parser_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
         return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    // chekc if output_type is provided, otherwise set msg
+    // check if output_type is provided, otherwise set msg
     if (args_dst->output_type == OUTPUT_UNDEFINED) {
         args_dst->output_type = OUTPUT_MSG;
+    }
+
+    // check if operation type is set, otherwise return error
+    if (args_dst->operation == OPERATION_UNDEFINED) {
+      return PARSE_ERROR_UNDEFINED_OPERATION;
     }
 
     return PARSE_SUCCESS;
