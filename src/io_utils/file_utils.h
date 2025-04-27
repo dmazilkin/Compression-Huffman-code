@@ -2,6 +2,7 @@
 #define IO_H
 
 #include "canonical_huffman.h"
+#include "arg_parser.h"
 
 typedef enum {
   FILE_READ_SUCCESS=0,
@@ -18,14 +19,19 @@ typedef struct {
 typedef struct {
   char chr;
   char* code;
-} metadata_t;
+} encode_metadata_t;
 
-file_status_t read_from_file(char* file_name, char** content);
+typedef struct {
+  int code;
+  int code_len;
+} decode_metadata_t;
+
+file_status_t read_from_file(char* file_name, char** content, operation_t option);
 
 file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name);
 
 file_status_t save_metadata(canonical_huff_table_t* huff);
 
-file_status_t read_metadata(reformatting_data_t* metadata);
+file_status_t read_metadata(decode_metadata_t* metadata);
 
 #endif //IO_H

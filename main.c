@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
     char* content = NULL;
 
     if (arguments.input_type == INPUT_FILE) {
-        file_status_t status = read_from_file(arguments.input_val, &content);
+        file_status_t status = read_from_file(arguments.input_val, &content, arguments.operation);
 
         if (status == FILE_READ_NOT_FOUND) {
             printf("Error! Status code %d: File not found!\n", status);
@@ -55,21 +55,22 @@ int main(int argc, char* argv[]) {
         save_metadata(&huff);
     /* Decomression operation */
     } else {
-        reformatting_data_t* metadata = (reformatting_data_t*)calloc(ASCII_SIZE, sizeof(reformatting_data_t));
+        /* Read metadata for decoding */
+        decode_metadata_t* metadata = (decode_metadata_t*)calloc(ASCII_SIZE, sizeof(decode_metadata_t));
         read_metadata(metadata);
-
-//TODO: REMOVE
-//        for (char i = 0; i < ASCII_SIZE - 1; i++) {
-//            if (metadata[i].count) {
-//              printf("char=%c: ", i);
-//                for (int j = 0; j < metadata[i].count; j++) {
-//                    printf("%c", metadata[i].data[j]);
-//                }
-//                printf("\n");
-//            }
-//        }
-
-        huffman_decode(metadata);
+        for (int i = 0; i < ASCII_SIZE; i++) {
+          if (metadata[i].code_len != 0) {
+                printf("%c: code=%d, len=%d\n", i, metadata[i].code, metadata[i].code_len);
+            }
+        }
+        printf("------------\n");
+        /* Read content */
+        char* content = NULL;
+        file_status_t status = read_from_file(arguments.input_val, &content, arguments.operation);
+        /* Decode content */
+        char* decoded_content = NULL;
+        huffman_decode(content, metadata, &decoded_content);
+        printf("Decoded content: %s\n", decoded_content);
     }
 
     return 0;

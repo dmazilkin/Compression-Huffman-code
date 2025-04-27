@@ -9,38 +9,25 @@
 #define METADATA ".metadata"
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
-static reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content);
+static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content);
+
+static file_status_t read_to_encode(char* file_name, char** content);
+
+static file_status_t read_to_decode(char* file_name, char** content);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-file_status_t read_from_file(char* file_name, char** content) {
-    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
-    int content_size = DEFAULT_SIZE;
+file_status_t read_from_file(char* file_name, char** content, operation_t option) {
 
-    FILE* file = fopen(file_name, "r");
-
-    if (file == NULL) {
-        return FILE_READ_NOT_FOUND;
+    if (option == COMPRESSION) {
+        return read_to_encode(file_name, content);
+    } else {
+        return read_to_decode(file_name, content);
     }
-
-    int symb = fgetc(file);
-    int ind = 0;
-
-    while (symb != EOF) {
-        if (ind >= content_size - 1) {
-            content_size *= 2;
-            *content = (char*)realloc(*content, content_size * sizeof(char));
-        }
-        *(*content+ind) = (char)symb;
-        symb = fgetc(file);
-        ind++;
-    }
-
-    return FILE_READ_SUCCESS;
 }
 
 file_status_t save_encoded_to_file(canonical_huff_table_t* huff, char* content, char* file_name)
 {
-    reformatting_data_t reformatting_data = get_reformatting_data(huff, content);
+    reformatting_data_t reformatting_data = reformate_encoded_data(huff, content);
 
     FILE* file = fopen(file_name, "w");
 
@@ -72,7 +59,7 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
       return FILE_WRITE_ERROR;
     }
 
-    metadata_t* metadata = (metadata_t*)calloc(huff->size, sizeof(metadata_t));
+    encode_metadata_t* metadata = (encode_metadata_t*)calloc(huff->size, sizeof(encode_metadata_t));
 
     for (int i = 0; i < huff->size; i++) {
         metadata[i].chr = huff->codes[i].chr;
@@ -92,7 +79,7 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
     return FILE_WRITE_SUCCESS;
 }
 
-file_status_t read_metadata(reformatting_data_t* metadata)
+file_status_t read_metadata(decode_metadata_t* metadata)
 {
     FILE* file = fopen(METADATA, "r");
 
@@ -105,11 +92,10 @@ file_status_t read_metadata(reformatting_data_t* metadata)
     fscanf(file, "[%d]", &code_len);
 
     while (chr != EOF) {
-        metadata[(int)chr].data = (char*)calloc(code_len, sizeof(char));
-        metadata[(int)chr].count = code_len;
+        metadata[(int)chr].code_len = code_len;
 
         for (int i = 0; i < code_len; i++) {
-            metadata[(int)chr].data[i] = fgetc(file);
+            metadata[(int)chr].code |= (fgetc(file) == '1' ? 1 : 0) << (code_len - i - 1);
         }
 
         chr = fgetc(file);
@@ -121,7 +107,58 @@ file_status_t read_metadata(reformatting_data_t* metadata)
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
-static reformatting_data_t get_reformatting_data(canonical_huff_table_t* huff, char* content)
+static file_status_t read_to_encode(char* file_name, char** content) {
+    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
+    int content_size = DEFAULT_SIZE;
+
+    FILE* file = fopen(file_name, "r");
+
+    if (file == NULL) {
+        return FILE_READ_NOT_FOUND;
+    }
+
+    int symb = fgetc(file);
+    int ind = 0;
+
+    while (symb != EOF) {
+        if (ind >= content_size - 1) {
+            content_size *= 2;
+            *content = (char*)realloc(*content, content_size * sizeof(char));
+        }
+        *(*content+ind) = (char)symb;
+        symb = fgetc(file);
+        ind++;
+    }
+
+    return FILE_READ_SUCCESS;
+}
+
+static file_status_t read_to_decode(char* file_name, char** content)
+{
+    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
+
+    FILE* file = fopen(file_name, "r");
+
+    if (file == NULL) {
+        return FILE_READ_NOT_FOUND;
+    }
+
+    char chr = fgetc(file);
+    int ind = 0;
+
+    while (chr != EOF) {
+      for (int i = 0; i < BYTE_SIZE; i++) {
+        (*content)[ind] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
+        ind++;
+      }
+
+      chr = fgetc(file);
+    }
+
+    return FILE_READ_SUCCESS;
+}
+
+static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content)
 {
     int chr_ind = 0;
     char chr = content[chr_ind];
