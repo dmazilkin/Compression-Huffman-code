@@ -27,7 +27,7 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
   int decoded_ind = 0;
 
   int size = content.content_size;
-  if ((content.is_eof) & (metadata->shift)) {
+  if ((content.is_eof == 1) && (metadata->shift > 0)) {
     size -= metadata->shift;
   }
 
@@ -38,22 +38,19 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
   int code = 0;
 
   if (decoded_content.undecoded_code_len > 0) {
-    code |= decoded_content.undecoded_code;
+    code = decoded_content.undecoded_code;
     code_len = decoded_content.undecoded_code_len;
   }
 
   while (content_ind < size) {
     int bit = (chr == '1' ? 1 : 0);
-//    printf("bit=%d\n", bit);
 
     code = (code << 1) | bit;
     code_len++;
-//    printf("Try to decode: code=%d, len=%d\n", code, code_len);
 
     for (char i = 0; i < ASCII_SIZE - 1; i++) {
       if ((code == metadata[(int)i].code) && (code_len == metadata[(int)i].code_len) && (metadata[(int)i].code_len != 0)) {
         decoded_content.content[decoded_ind] = i;
-//        printf("Decoded: %c!\n", i);
         decoded_ind++;
         code = 0;
         code_len = 0;
@@ -65,8 +62,8 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
   }
 
   if (code_len != 0) {
-    decoded_content.undecoded_code = code;
-    decoded_content.undecoded_code_len = code_len;
+      decoded_content.undecoded_code = code;
+      decoded_content.undecoded_code_len = code_len;
   } else {
     decoded_content.undecoded_code = 0;
     decoded_content.undecoded_code_len = 0;

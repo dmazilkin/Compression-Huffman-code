@@ -25,7 +25,7 @@ canonical_huff_table_t get_canonical_huff(huff_table_t* huff_table)
 
         if (code_len_diff) {
             canonical_huff.codes[i].code <<= code_len_diff;
-            canonical_huff.codes[i].code_len = canonical_huff.codes[i-1].code_len + 1;
+            canonical_huff.codes[i].code_len = canonical_huff.codes[i-1].code_len + code_len_diff;
         } else {
             canonical_huff.codes[i].code_len = canonical_huff.codes[i-1].code_len;
         }

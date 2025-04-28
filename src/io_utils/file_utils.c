@@ -5,9 +5,12 @@
 #include "file_utils.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 8
+#define DEFAULT_SIZE 64
 #define BYTE_SIZE 8
 #define METADATA ".metadata"
+
+/**************************** STATIC VARIABLES ****************************/
+static int prev_chr = 0;
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content);
@@ -32,17 +35,23 @@ file_status_t read_content_to_decode(char* file_name, read_content_t* read_conte
         read_content->file = fopen(file_name, "r");
     }
 
-    int chr = fgetc(read_content->file);
+    int chr = prev_chr;
+
+    if (chr == 0) {
+        chr = fgetc(read_content->file);
+    }
+
     int ind = 0;
 
-    while ((ind < DEFAULT_SIZE) & (chr != EOF)) {
+    while ((chr != EOF) && (ind < DEFAULT_SIZE)) {
         for (int i = 0; i < BYTE_SIZE; i++) {
-            read_content->content[ind] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
-            ind++;
+            read_content->content[ind*BYTE_SIZE + i] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
         }
+        ind++;
 
-        if (!(ind >= DEFAULT_SIZE)) {
-            chr = fgetc(read_content->file);
+        chr = fgetc(read_content->file);
+        if (chr != EOF) {
+            prev_chr = chr;
         }
     }
 
@@ -51,7 +60,7 @@ file_status_t read_content_to_decode(char* file_name, read_content_t* read_conte
       fclose(read_content->file);
     }
 
-    read_content->content_size = ind;
+    read_content->content_size = BYTE_SIZE*ind;
 
     return FILE_READ_SUCCESS;
 }
@@ -89,7 +98,7 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
         fwrite(&byte_to_write, sizeof(char), 1, file);
     }
 
-    if (reformatting_data.count % BYTE_SIZE) {
+    if (reformatting_data.count % BYTE_SIZE > 0) {
         huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
     }
 
@@ -106,7 +115,6 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
       return FILE_WRITE_ERROR;
     }
 
-//    encode_metadata_t* metadata = (encode_metadata_t*)calloc(huff->size, sizeof(encode_metadata_t));
     encode_metadata_t metadata[huff->size];
 
     fprintf(file, "shift[%d]", huff->shift);
@@ -170,6 +178,7 @@ file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content)
     }
 
     fwrite(decoded_content->content, sizeof(char), decoded_content->content_size, file);
+    fclose(file);
 
     return FILE_WRITE_SUCCESS;
 }
