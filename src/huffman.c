@@ -9,16 +9,185 @@
 /**************************** DEFINES ****************************/
 #define ASCII_SIZE 128
 #define BYTE_SIZE 8
+#define NOT_INITIALIZED 0
+#define COMBINED_CHARACTER 0
+#define RIGHT_CODE 0
+#define LEFT_CODE 1
+
+/**************************** STATIC FUNCTION DECLARATIONS ****************************/
+static int compare_tree_nodes(const void* node1, const void* node2);
+
+static min_heap_node_t* pop_min(min_heap_t* min_heap, min_heap_t* buff_huff_codes);
+
+static void insert_and_update(min_heap_t* huff_tree, min_heap_node_t new_node);
+
+static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_start);
+
+static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size);
+
+static void build_huff_tree(min_heap_t* min_heap, min_heap_t* buff_min_heap);
+
+static void bubble_up(min_heap_t* huff_tree, int node_ind);
+
+static void bubble_down(min_heap_t* huff_tree, int node_ind);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-canonical_huff_table_t huffman_encode(char* content)
+freq_table_t create_freq_table(char_freq_t* frequencies)
 {
-  freq_table_t freq_table = get_freq_table(content);
-  huff_tree_t tree = get_huff_tree(&freq_table);
-  huff_table_t huff_table = get_base_huff(&tree, freq_table.size);
-  canonical_huff_table_t canonical_huff_table = get_canonical_huff(&huff_table);
+  freq_table_t freq_table = { .frequencies = frequencies, .size = ASCII_SIZE, .non_zero_count = 0, .total_freq = 0 };
 
-  return canonical_huff_table;
+  for (int i = 0; i < freq_table.size; i++) {
+    freq_table.frequencies[i].chr = (char)i;
+    freq_table.frequencies[i].freq = 0;
+  }
+
+  return freq_table;
+}
+
+void update_freq_table(read_content_t* read_content, freq_table_t* freq_table)
+{
+  for (int i = 0; i < read_content->content_size; i++) {
+
+    if (freq_table->frequencies[(int)read_content->content[i]].freq == 0) {
+      freq_table->non_zero_count++;
+    }
+
+    freq_table->frequencies[(int)read_content->content[i]].freq += 1;
+    freq_table->total_freq += 1;
+  }
+
+  return;
+}
+
+void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff_tree_size)
+{
+  /* Initialize Huffman Tree with min-heap */
+  min_heap_node_t* nodes = (min_heap_node_t*)calloc(huff_tree_size, sizeof(min_heap_node_t));
+  min_heap_t min_heap = create_min_heap(freq_table, nodes, huff_tree_size);
+
+  /* Build huff_tree */
+  int buff_nodes_count = 2*huff_tree_size-1;
+  min_heap_node_t* buff_nodes = (min_heap_node_t*)calloc(buff_nodes_count, sizeof(min_heap_node_t));
+  min_heap_t buff_min_heap = { .nodes=buff_nodes, .size=0 };
+
+  build_huff_tree(&min_heap, &buff_min_heap);
+
+  /* Calculate Huffman code */
+  min_heap_node_t* peak = &(min_heap.nodes[0]);
+  set_node_code(peak, codes, 1);
+
+  return;
+}
+
+encoded_content_t huffman_encode(read_content_t content, char* encoded_data, canonical_huff_table_t* huff_table, int* unencoded_code, int* unencoded_code_len)
+{
+  encoded_content_t encoded_content = { .content = encoded_data, .content_size = 0 };
+
+  int encoded_content_ind = 0;
+  int content_ind = 0;
+
+  char chr_to_encode = content.content[content_ind];
+  int code = huff_table->codes[chr_to_encode].code;
+  int code_len = huff_table->codes[chr_to_encode].code_len;
+//  printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
+//  printf("code=%d, len=%d\n", code, code_len);
+//  printf("byte=%d, byte_len=%d\n", 0, 0);
+
+  char is_ready = 0;
+
+  unsigned char byte = 0;
+  unsigned char byte_len = 0;
+
+  if (*unencoded_code_len != 0) {
+    byte = *unencoded_code;
+    byte_len = *unencoded_code_len;
+  }
+
+  while (content_ind < content.content_size) {
+
+    if (is_ready) {
+      chr_to_encode = content.content[content_ind];
+      code = huff_table->codes[chr_to_encode].code;
+      code_len = huff_table->codes[chr_to_encode].code_len;
+//      printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
+//      printf("code=%d, len=%d\n", code, code_len);
+//      printf("byte=%d, byte_len=%d\n", byte, byte_len);
+//      printf("encoded bytes: %d\n", encoded_content_ind);
+      is_ready = 0;
+    }
+
+    if (BYTE_SIZE - byte_len >= code_len) {
+      while (code_len > 0) {
+        byte |= ((code & (0b1 << (code_len - 1))) ? 1 : 0) << (BYTE_SIZE - byte_len - 1);
+        code_len--;
+        byte_len++;
+      }
+
+//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
+
+      if (byte_len == BYTE_SIZE) {
+        /* Save byte of encoded data */
+        encoded_content.content[encoded_content_ind] = byte;
+        byte_len = 0;
+        byte = 0;
+        /* Ready to fill next byte */
+        encoded_content_ind++;
+      }
+
+      /* Ready to encode next character */
+      content_ind++;
+      is_ready = 1;
+    }
+    else {
+      while (BYTE_SIZE - byte_len > 0) {
+        byte |= ((code & (0b1 << (code_len - 1))) ? 1 : 0) << (BYTE_SIZE - byte_len - 1);
+        code_len--;
+        byte_len++;
+      }
+
+//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
+
+      if (byte_len == BYTE_SIZE) {
+        /* Save byte of encoded data */
+        encoded_content.content[encoded_content_ind] = byte;
+        byte = 0;
+        byte_len = 0;
+
+      }
+
+      /* Ready to fill next byte */
+      encoded_content_ind++;
+      /* Encode remaining bits */
+      is_ready = 0;
+    }
+  }
+
+  encoded_content.content_size = encoded_content_ind;
+
+  if (byte_len != 0) {
+    printf("Not filled last byte.\n");
+    printf("Byte: code=%d, len=%d\n", byte, byte_len);
+
+    if (content.is_eof) {
+      encoded_content.content[encoded_content_ind] = byte;
+      huff_table->shift = BYTE_SIZE - byte_len;
+      encoded_content.content_size++;
+    }
+    else {
+      *unencoded_code = byte;
+      *unencoded_code_len = byte_len;
+      printf("WARNING: Buffer: code=%d, len=%d\n", *unencoded_code, *unencoded_code_len);
+    }
+  }
+  else {
+    *unencoded_code = 0;
+    *unencoded_code_len = 0;
+  }
+
+  printf("Content size: %d\n", encoded_content.content_size);
+  printf("Character encoded: %d\n", content_ind);
+
+  return encoded_content;
 }
 
 decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len)
@@ -75,3 +244,152 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
+static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_start)
+{
+  min_heap_node_t* left = (min_heap_node_t*)node->left;
+  min_heap_node_t* right = (min_heap_node_t*)node->right;
+
+  if ((left != NULL) && (right != NULL)) {
+    if (!(is_start)) {
+      left->code = (node->code << 1) | LEFT_CODE;
+      left->code_len = node->code_len + 1;
+      right->code = (node->code << 1) | RIGHT_CODE;
+      right->code_len = node->code_len + 1;
+    } else {
+      left->code = LEFT_CODE;
+      left->code_len = 1;
+      right->code = RIGHT_CODE;
+      right->code_len = 1;
+    }
+
+    /* Set left parent */
+    if (left->chr != COMBINED_CHARACTER) {
+      codes[left->chr].chr = left->chr;
+      codes[left->chr].code = left->code;
+      codes[left->chr].code_len = left->code_len;
+    }
+    /* Set right parent */
+    if (right->chr != COMBINED_CHARACTER) {
+      codes[right->chr].chr = right->chr;
+      codes[right->chr].code = right->code;
+      codes[right->chr].code_len = right->code_len;
+    }
+
+    set_node_code(left, codes, 0);
+    set_node_code(right, codes, 0);
+  }
+
+  return;
+}
+
+static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size)
+{
+  min_heap_t min_heap = { .nodes=nodes, .size=0 };
+
+  int is_initialized = 0;
+  int empty_ind = 0;
+
+  for (int i = 0; i < freq_table->size; i++) {
+    if (freq_table->frequencies[i].freq > 0) {
+      min_heap_node_t node = {
+        .chr = freq_table->frequencies[i].chr,
+        .freq = freq_table->frequencies[i].freq,
+        .left = NULL,
+        .right = NULL,
+      };
+      insert_and_update(&min_heap, node);
+    }
+  }
+
+  return min_heap;
+}
+
+static void build_huff_tree(min_heap_t* min_heap, min_heap_t* buff_min_heap)
+{
+  while (min_heap->size > 1) {
+    min_heap_node_t* left = pop_min(min_heap, buff_min_heap);
+    min_heap_node_t* right = pop_min(min_heap, buff_min_heap);
+
+    min_heap_node_t new_node = {
+        .chr=COMBINED_CHARACTER,
+        .freq=left->freq + right->freq,
+        .code = NOT_INITIALIZED,
+        .code_len = NOT_INITIALIZED,
+        .left = left,
+        .right = right,
+    };
+
+    insert_and_update(min_heap, new_node);
+  }
+  return;
+}
+
+static min_heap_node_t* pop_min(min_heap_t* min_heap, min_heap_t* buff_huff_codes)
+{
+  /* Save min node to buffer */
+  buff_huff_codes->nodes[buff_huff_codes->size] = min_heap->nodes[0];
+  min_heap_node_t* min_node = &buff_huff_codes->nodes[buff_huff_codes->size];
+  buff_huff_codes->size++;
+
+  min_heap->nodes[0] = min_heap->nodes[min_heap->size-1];
+  min_heap->size--;
+  bubble_down(min_heap, 0);
+
+  return min_node;
+}
+
+static void insert_and_update(min_heap_t* huff_tree, min_heap_node_t new_node)
+{
+  huff_tree->nodes[huff_tree->size] = new_node;
+  huff_tree->size++;
+  bubble_up(huff_tree, huff_tree->size - 1);
+
+  return;
+}
+
+static void bubble_up(min_heap_t* huff_tree, int node_ind)
+{
+  if (node_ind != 0) {
+    int parent_ind = (node_ind - 1) / 2;
+    min_heap_node_t parent = huff_tree->nodes[parent_ind];
+    min_heap_node_t child = huff_tree->nodes[node_ind];
+
+    if (child.freq < parent.freq) {
+      huff_tree->nodes[parent_ind] = child;
+      huff_tree->nodes[node_ind] = parent;
+      bubble_up(huff_tree, parent_ind);
+    }
+  }
+
+  return;
+}
+
+static void bubble_down(min_heap_t* huff_tree, int node_ind)
+{
+  int left_ind = 2 * node_ind + 1;
+  int right_ind = 2 * (node_ind + 1);
+
+  if (right_ind < huff_tree->size) {
+    int child_ind = (huff_tree->nodes[left_ind].freq < huff_tree->nodes[right_ind].freq) ? left_ind : right_ind;
+    min_heap_node_t child = huff_tree->nodes[child_ind];
+    min_heap_node_t parent = huff_tree->nodes[node_ind];
+
+    if (child.freq < parent.freq) {
+      huff_tree->nodes[node_ind] = child;
+      huff_tree->nodes[child_ind] = parent;
+      bubble_down(huff_tree, child_ind);
+    }
+  } else if (left_ind < huff_tree->size) {
+    int child_ind = left_ind;
+    min_heap_node_t child = huff_tree->nodes[child_ind];
+    min_heap_node_t parent = huff_tree->nodes[node_ind];
+
+    if (child.freq < parent.freq) {
+      huff_tree->nodes[node_ind] = child;
+      huff_tree->nodes[child_ind] = parent;
+      bubble_down(huff_tree, child_ind);
+    }
+  }
+
+  return;
+}

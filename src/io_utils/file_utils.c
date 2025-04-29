@@ -13,14 +13,13 @@
 static int prev_chr = 0;
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
-static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
 file_status_t read_to_encode_from_file(char* file_name, char** content) {
     int content_size = DEFAULT_SIZE;
     *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
 
-    FILE* file = fopen(file_name, "r");
+    FILE* file = fopen(file_name, "rb");
 
     if (file == NULL) {
         return FILE_READ_NOT_FOUND;
@@ -42,10 +41,45 @@ file_status_t read_to_encode_from_file(char* file_name, char** content) {
     return FILE_READ_SUCCESS;
 }
 
+file_status_t read_chunk_to_encode(char* file_name, read_content_t* read_content, int chunk_size)
+{
+    if (read_content->file == NULL) {
+        read_content->file = fopen(file_name, "rb");
+    }
+
+    int chr = prev_chr;
+
+    if (chr == 0) {
+        chr = fgetc(read_content->file);
+    }
+
+    int ind = 0;
+
+    while ((chr != EOF) && (ind < chunk_size)) {
+        read_content->content[ind] = chr;
+        ind++;
+
+        chr = fgetc(read_content->file);
+        if (chr != EOF) {
+            prev_chr = chr;
+        }
+    }
+
+    if (chr == EOF) {
+        read_content->is_eof = 1;
+        prev_chr = 0;
+        fclose(read_content->file);
+    }
+
+    read_content->content_size = ind;
+
+  return FILE_READ_SUCCESS;
+}
+
 file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size)
 {
     if (read_content->file == NULL) {
-        read_content->file = fopen(file_name, "r");
+        read_content->file = fopen(file_name, "rb");
     }
 
     int chr = prev_chr;
@@ -78,42 +112,15 @@ file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content
     return FILE_READ_SUCCESS;
 }
 
-file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* file_name)
+file_status_t save_encoded(char* file_name, encoded_content_t* content)
 {
-    reformatting_data_t reformatting_data = reformate_encoded_data(huff, content);
-
-    FILE* file = fopen(file_name, "w");
+    FILE* file = fopen(file_name, "ab");
 
     if (file == NULL) {
       return FILE_WRITE_ERROR;
     }
 
-    for (int i = 0; i < reformatting_data.count / BYTE_SIZE; i++) {
-        unsigned char byte_to_write = 0b0;
-
-        for (int j = 0; j < BYTE_SIZE; j++) {
-            unsigned char byte = ((reformatting_data.data[i * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
-            byte_to_write |= byte;
-        }
-
-        fwrite(&byte_to_write, sizeof(char), 1, file);
-    }
-
-    int rest_ind = reformatting_data.count / BYTE_SIZE;
-    unsigned char byte_to_write = 0b0;
-
-    if (reformatting_data.count % BYTE_SIZE) {
-        for (int j = 0; j < reformatting_data.count % BYTE_SIZE; j++) {
-            unsigned char byte = ((reformatting_data.data[rest_ind * BYTE_SIZE + j] == '1')) << (BYTE_SIZE - j - 1);
-            byte_to_write |= byte;
-        }
-
-        fwrite(&byte_to_write, sizeof(char), 1, file);
-    }
-
-    if (reformatting_data.count % BYTE_SIZE > 0) {
-        huff->shift = BYTE_SIZE - reformatting_data.count % BYTE_SIZE;
-    }
+    fwrite(content->content, sizeof(content->content[0]), content->content_size, file);
 
     fclose(file);
 
@@ -122,7 +129,7 @@ file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* fi
 
 file_status_t save_metadata(canonical_huff_table_t* huff)
 {
-    FILE* file = fopen(".metadata", "w");
+    FILE* file = fopen(".metadata", "wb");
 
     if (file == NULL) {
       return FILE_WRITE_ERROR;
@@ -133,17 +140,19 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
     fprintf(file, "shift[%d]", huff->shift);
 
     for (int i = 0; i < huff->size; i++) {
-        metadata[i].chr = huff->codes[i].chr;
-        char code[huff->codes[i].code_len];
-        metadata[i].code = code;
+        if (huff->codes[i].code_len != 0) {
+            metadata[i].chr = huff->codes[i].chr;
+            char code[huff->codes[i].code_len];
+            metadata[i].code = code;
 
-        for (int j = 0; j < huff->codes[i].code_len; j++) {
-            metadata[i].code[huff->codes[i].code_len - j - 1] = huff->codes[i].code & (1 << j) ? '1' : '0';
+            for (int j = 0; j < huff->codes[i].code_len; j++) {
+                metadata[i].code[huff->codes[i].code_len - j - 1] = huff->codes[i].code & (1 << j) ? '1' : '0';
+            }
+
+            fwrite(&metadata[i].chr, sizeof(char), 1, file);
+            fprintf(file, "[%d]", huff->codes[i].code_len);
+            fwrite(metadata[i].code, sizeof(char), huff->codes[i].code_len, file);
         }
-
-        fwrite(&metadata[i].chr, sizeof(char), 1, file);
-        fprintf(file, "[%d]", huff->codes[i].code_len);
-        fwrite(metadata[i].code, sizeof(char), huff->codes[i].code_len, file);
     }
 
     fclose(file);
@@ -153,7 +162,7 @@ file_status_t save_metadata(canonical_huff_table_t* huff)
 
 file_status_t read_metadata(decode_metadata_t* metadata)
 {
-    FILE* file = fopen(METADATA, "r");
+    FILE* file = fopen(METADATA, "rb");
 
     if (file == NULL) {
       return FILE_READ_NOT_FOUND;
@@ -184,7 +193,7 @@ file_status_t read_metadata(decode_metadata_t* metadata)
 
 file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content)
 {
-    FILE* file = fopen(file_name, "a+");
+    FILE* file = fopen(file_name, "ab");
 
     if (file == NULL) {
       return FILE_WRITE_ERROR;
@@ -197,37 +206,3 @@ file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content)
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
-static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content)
-{
-    int chr_ind = 0;
-    char chr = content[chr_ind];
-    reformatting_data_t encoded_text = { .data=(char*)calloc(DEFAULT_SIZE, sizeof(char)), .count = 0 };
-    int encoded_size = DEFAULT_SIZE;
-
-    while (chr != '\0') {
-        int code = -1;
-        int code_len = -1;
-
-        for (int i = 0; i < huff->size; i++) {
-            if (huff->codes[i].chr == chr) {
-                code = huff->codes[i].code;
-                code_len = huff->codes[i].code_len;
-                i = huff->size;
-            }
-        }
-
-        if (code_len + encoded_text.count + 1 > encoded_size) {
-            encoded_text.data = (char*)realloc(encoded_text.data, 2 * encoded_size * sizeof(char));
-        }
-
-        for (int i = code_len - 1; i >= 0; i--) {
-            encoded_text.data[encoded_text.count + code_len - i - 1] = code & (1 << i) ? '1' : '0';
-        }
-
-        encoded_text.count += code_len;
-        chr_ind++;
-        chr = content[chr_ind];
-    }
-
-    return encoded_text;
-}
