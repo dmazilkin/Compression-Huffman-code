@@ -26,10 +26,11 @@ static app_status_t decompress_from_cli(char* data);
 app_status_t app(arg_t args) {
   switch (args.operation) {
     case COMPRESSION: {
-            /* Read data in chunks from file and decode it */
             if (args.input_type == INPUT_FILE) {
+                /* Read data from file and encode it */
                 app_status_t app_status = compress_from_file(args.input_val, args.output_val);
             } else {
+                /* Read and encode data from cli */
                 app_status_t app_status = compress_from_cli(args.input_val);
             }
             break;
@@ -39,11 +40,12 @@ app_status_t app(arg_t args) {
             decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0 } };
             (void)read_metadata(metadata);
 
-            /* Read data in chunks from file and decode it */
             if (args.input_type == INPUT_FILE) {
+                /* Read data from file and decode it */
                 decompress_from_file(args.input_val, args.output_val, metadata);
-            }  else {
-              (void)decompress_from_cli(args.input_val);
+            } else {
+                /* Read and decode data from cli */
+                (void)decompress_from_cli(args.input_val);
             }
             break;
         }
@@ -103,12 +105,10 @@ static app_status_t decompress_from_file(char* input_file_name, char* output_fil
 
 static app_status_t compress_from_cli(char* data)
 {
-
-  return APP_STATUS_SUCCESS;
+    return APP_STATUS_SUCCESS;
 }
 
 static app_status_t decompress_from_cli(char* data)
 {
-
     return APP_STATUS_SUCCESS;
 }
