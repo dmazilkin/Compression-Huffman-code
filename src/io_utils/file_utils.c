@@ -42,6 +42,40 @@ file_status_t read_to_encode_from_file(char* file_name, char** content) {
     return FILE_READ_SUCCESS;
 }
 
+file_status_t read_chunk_to_encode(char* file_name, read_content_t* read_content, int chunk_size)
+{
+    if (read_content->file == NULL) {
+        read_content->file = fopen(file_name, "r");
+    }
+
+    int chr = prev_chr;
+
+    if (chr == 0) {
+        chr = fgetc(read_content->file);
+    }
+
+    int ind = 0;
+
+    while ((chr != EOF) && (ind < chunk_size)) {
+        read_content->content[ind] = chr;
+        ind++;
+
+        chr = fgetc(read_content->file);
+        if (chr != EOF) {
+            prev_chr = chr;
+        }
+    }
+
+    if (chr == EOF) {
+        read_content->is_eof = 1;
+        fclose(read_content->file);
+    }
+
+    read_content->content_size = ind;
+
+  return FILE_READ_SUCCESS;
+}
+
 file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size)
 {
     if (read_content->file == NULL) {

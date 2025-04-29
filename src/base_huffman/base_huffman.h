@@ -8,6 +8,7 @@ typedef struct {
 
 typedef struct {
     char_freq_t* frequencies;
+    int non_zero_count;
     int size;
     int total_freq;
 } freq_table_t;
@@ -39,8 +40,6 @@ typedef struct {
 } huff_table_t;
 
 freq_table_t get_freq_table(char* content);
-
-huff_tree_t get_huff_tree(freq_table_t* freq_table);
 
 huff_table_t get_base_huff(huff_tree_t* tree, int leaf_count);
 
