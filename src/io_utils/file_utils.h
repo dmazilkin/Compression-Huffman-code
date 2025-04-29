@@ -43,7 +43,7 @@ typedef struct {
   int undecoded_code_len;
 } decoded_content_t;
 
-file_status_t read_from_file(char* file_name, char** content, operation_t option);
+file_status_t read_to_encode_from_file(char* file_name, char** content);
 
 file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size);
 
