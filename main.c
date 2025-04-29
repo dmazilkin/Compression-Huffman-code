@@ -8,7 +8,7 @@
 
 /**************************** DEFINES ****************************/
 #define ASCII_SIZE 128
-#define DEFAULT_SIZE 64
+#define CHUNK_SIZE 64
 #define BYTE_SIZE 8
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
@@ -55,9 +55,9 @@ int main(int argc, char* argv[]) {
             /* Encode content */
             canonical_huff_table_t huff = huffman_encode(content);
             /* Write Huffman code to file */
-            save_encoded(&huff, content, arguments.output_val);
+            (void)save_encoded(&huff, content, arguments.output_val);
             /* Save metadata to file */
-            save_metadata(&huff);
+            (void)save_metadata(&huff);
         /* Read data from command line */
         } else {
           content = arguments.input_val;
@@ -66,24 +66,24 @@ int main(int argc, char* argv[]) {
     } else {
         /* Read metadata for decoding */
         decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0 } };
-        read_metadata(metadata);
+        (void)read_metadata(metadata);
 
         /* Read data in chunks from file and decode it */
         if (arguments.input_type == INPUT_FILE) {
-            char data[DEFAULT_SIZE*BYTE_SIZE] = { 0 };
+            char data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
             read_content_t read_content = { .content = data, .content_size = 0, .is_eof = 0, .file = NULL };
             int undecoded_code = 0;
             int undecoded_code_len = 0;
 
             while (read_content.is_eof != 1) {
-                read_content_to_decode(arguments.input_val, &read_content);
+                (void)read_chunk_to_decode(arguments.input_val, &read_content, CHUNK_SIZE);
                 /* Decode content */
-                char encoded_data[DEFAULT_SIZE*BYTE_SIZE] = { 0 };
+                char encoded_data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
                 decoded_content_t decoded_content = huffman_decode(read_content, metadata, encoded_data, undecoded_code, undecoded_code_len);
                 undecoded_code = decoded_content.undecoded_code;
                 undecoded_code_len = decoded_content.undecoded_code_len;
                 /* Save decoded content */
-                save_decoded(arguments.output_val, &decoded_content);
+                (void)save_decoded(arguments.output_val, &decoded_content);
             }
         }  else {
             char* content = NULL;

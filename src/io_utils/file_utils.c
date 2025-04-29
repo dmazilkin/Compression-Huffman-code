@@ -29,7 +29,7 @@ file_status_t read_from_file(char* file_name, char** content, operation_t option
     }
 }
 
-file_status_t read_content_to_decode(char* file_name, read_content_t* read_content)
+file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size)
 {
     if (read_content->file == NULL) {
         read_content->file = fopen(file_name, "r");
@@ -43,7 +43,7 @@ file_status_t read_content_to_decode(char* file_name, read_content_t* read_conte
 
     int ind = 0;
 
-    while ((chr != EOF) && (ind < DEFAULT_SIZE)) {
+    while ((chr != EOF) && (ind < chunk_size)) {
         for (int i = 0; i < BYTE_SIZE; i++) {
             read_content->content[ind*BYTE_SIZE + i] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
         }

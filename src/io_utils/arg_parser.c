@@ -40,17 +40,17 @@ parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
         }
     }
 
-    // check if intput_type is provided, otherwise return error
+    /* check if intput_type is provided, otherwise return error */
     if (args_dst->input_type == INPUT_UNDEFINED) {
         return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    // check if output_type is provided, otherwise set msg
+    /* check if output_type is provided, otherwise set msg */
     if (args_dst->output_type == OUTPUT_UNDEFINED) {
         args_dst->output_type = OUTPUT_MSG;
     }
 
-    // check if operation type is set, otherwise return error
+    /* check if operation type is set, otherwise return error */
     if (args_dst->operation == OPERATION_UNDEFINED) {
       return PARSE_ERROR_UNDEFINED_OPERATION;
     }
