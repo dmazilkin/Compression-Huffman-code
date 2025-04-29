@@ -3,7 +3,7 @@
 #include "arg_parser.h"
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-arg_parser_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
+parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
     for (int i = 1; i < argc; i++) {
         if (args_src[i][0] == '-') {
             if (args_src[i][1] == '-') {
