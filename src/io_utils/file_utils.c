@@ -15,21 +15,34 @@ static int prev_chr = 0;
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content);
 
-static file_status_t read_to_encode(char* file_name, char** content);
-
-static file_status_t read_to_decode(char* file_name, char** content);
-
 /**************************** INTERFACE FUNCTIONS ****************************/
-file_status_t read_from_file(char* file_name, char** content, operation_t option) {
+file_status_t read_to_encode_from_file(char* file_name, char** content) {
+    int content_size = DEFAULT_SIZE;
+    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
 
-    if (option == COMPRESSION) {
-        return read_to_encode(file_name, content);
-    } else {
-        return read_to_decode(file_name, content);
+    FILE* file = fopen(file_name, "r");
+
+    if (file == NULL) {
+        return FILE_READ_NOT_FOUND;
     }
+
+    int symb = fgetc(file);
+    int ind = 0;
+
+    while (symb != EOF) {
+        if (ind >= content_size - 1) {
+            content_size += DEFAULT_SIZE;
+            *content = (char*)realloc(*content, content_size * sizeof(char));
+        }
+        *(*content+ind) = (char)symb;
+        symb = fgetc(file);
+        ind++;
+    }
+
+    return FILE_READ_SUCCESS;
 }
 
-file_status_t read_content_to_decode(char* file_name, read_content_t* read_content)
+file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size)
 {
     if (read_content->file == NULL) {
         read_content->file = fopen(file_name, "r");
@@ -43,7 +56,7 @@ file_status_t read_content_to_decode(char* file_name, read_content_t* read_conte
 
     int ind = 0;
 
-    while ((chr != EOF) && (ind < DEFAULT_SIZE)) {
+    while ((chr != EOF) && (ind < chunk_size)) {
         for (int i = 0; i < BYTE_SIZE; i++) {
             read_content->content[ind*BYTE_SIZE + i] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
         }
@@ -184,63 +197,6 @@ file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content)
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
-static file_status_t read_to_encode(char* file_name, char** content) {
-    int content_size = DEFAULT_SIZE;
-    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
-
-    FILE* file = fopen(file_name, "r");
-
-    if (file == NULL) {
-        return FILE_READ_NOT_FOUND;
-    }
-
-    int symb = fgetc(file);
-    int ind = 0;
-
-    while (symb != EOF) {
-        if (ind >= content_size - 1) {
-            content_size += DEFAULT_SIZE;
-            *content = (char*)realloc(*content, content_size * sizeof(char));
-        }
-        *(*content+ind) = (char)symb;
-        symb = fgetc(file);
-        ind++;
-    }
-
-    return FILE_READ_SUCCESS;
-}
-
-static file_status_t read_to_decode(char* file_name, char** content)
-{
-    int content_size = DEFAULT_SIZE;
-    *content = (char*)calloc(content_size, sizeof(char));
-
-    FILE* file = fopen(file_name, "r");
-
-    if (file == NULL) {
-        return FILE_READ_NOT_FOUND;
-    }
-
-    int chr = fgetc(file);
-    int ind = 0;
-
-    while (chr != EOF) {
-      for (int i = 0; i < BYTE_SIZE; i++) {
-        (*content)[ind] = (0b1 & (chr >> (BYTE_SIZE - i - 1))) ? '1' : '0';
-        ind++;
-
-        if (ind >= content_size - 1) {
-          content_size += DEFAULT_SIZE;
-          *content = (char*)realloc(*content, content_size * sizeof(char));
-        }
-      }
-
-      chr = fgetc(file);
-    }
-
-    return FILE_READ_SUCCESS;
-}
-
 static reformatting_data_t reformate_encoded_data(canonical_huff_table_t* huff, char* content)
 {
     int chr_ind = 0;
