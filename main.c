@@ -2,14 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "huffman.h"
 #include "arg_parser.h"
-#include "file_utils.h"
+#include "app.h"
 
 /**************************** DEFINES ****************************/
-#define ASCII_SIZE 128
-#define CHUNK_SIZE 64
-#define BYTE_SIZE 8
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 
@@ -38,57 +34,11 @@ int main(int argc, char* argv[]) {
       return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    /* Compress data */
-    if (arguments.operation == COMPRESSION) {
-        /* Read content to compress */
-        char* content = NULL;
+    /* Start application */
+    app_status_t app_status = app(arguments);
 
-        /* Read data in chunks from file and decode it */
-        if (arguments.input_type == INPUT_FILE) {
-            file_status_t status = read_from_file(arguments.input_val, &content, arguments.operation);
-
-            if (status == FILE_READ_NOT_FOUND) {
-                printf("Error! Status code %d: File not found!\n", status);
-                return FILE_READ_NOT_FOUND;
-            }
-
-            /* Encode content */
-            canonical_huff_table_t huff = huffman_encode(content);
-            /* Write Huffman code to file */
-            (void)save_encoded(&huff, content, arguments.output_val);
-            /* Save metadata to file */
-            (void)save_metadata(&huff);
-        /* Read data from command line */
-        } else {
-          content = arguments.input_val;
-        }
-    /* Decompress data */
-    } else {
-        /* Read metadata for decoding */
-        decode_metadata_t metadata[ASCII_SIZE] = { { .code = 0, .code_len = 0, .shift = 0 } };
-        (void)read_metadata(metadata);
-
-        /* Read data in chunks from file and decode it */
-        if (arguments.input_type == INPUT_FILE) {
-            char data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
-            read_content_t read_content = { .content = data, .content_size = 0, .is_eof = 0, .file = NULL };
-            int undecoded_code = 0;
-            int undecoded_code_len = 0;
-
-            while (read_content.is_eof != 1) {
-                (void)read_chunk_to_decode(arguments.input_val, &read_content, CHUNK_SIZE);
-                /* Decode content */
-                char encoded_data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
-                decoded_content_t decoded_content = huffman_decode(read_content, metadata, encoded_data, undecoded_code, undecoded_code_len);
-                undecoded_code = decoded_content.undecoded_code;
-                undecoded_code_len = decoded_content.undecoded_code_len;
-                /* Save decoded content */
-                (void)save_decoded(arguments.output_val, &decoded_content);
-            }
-        }  else {
-            char* content = NULL;
-            content = arguments.input_val;
-        }
+    if (app_status == APP_STATUS_ERROR) {
+      printf("Error! Application status code: %d\n", app_status);
     }
 
     return 0;
