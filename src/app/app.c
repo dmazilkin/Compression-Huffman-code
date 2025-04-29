@@ -16,22 +16,24 @@
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 static app_status_t compress_from_file(char* input_file_name, char* output_file_name);
 
-static app_status_t compress_from_cli(char* data);
-
 static app_status_t decompress_from_file(char* input_file_name, char* output_file_name, decode_metadata_t* metadata);
+
+static app_status_t compress_from_cli(char* data);
 
 static app_status_t decompress_from_cli(char* data);
 
 /**************************** INTERFACE FUNCTIONS ****************************/
 app_status_t app(arg_t args) {
+  app_status_t app_status = APP_STATUS_UNDEFINED;
+
   switch (args.operation) {
     case COMPRESSION: {
             if (args.input_type == INPUT_FILE) {
                 /* Read data from file and encode it */
-                app_status_t app_status = compress_from_file(args.input_val, args.output_val);
+                app_status = compress_from_file(args.input_val, args.output_val);
             } else {
                 /* Read and encode data from cli */
-                app_status_t app_status = compress_from_cli(args.input_val);
+                app_status = compress_from_cli(args.input_val);
             }
             break;
         }
@@ -42,10 +44,10 @@ app_status_t app(arg_t args) {
 
             if (args.input_type == INPUT_FILE) {
                 /* Read data from file and decode it */
-                decompress_from_file(args.input_val, args.output_val, metadata);
+                app_status = decompress_from_file(args.input_val, args.output_val, metadata);
             } else {
                 /* Read and decode data from cli */
-                (void)decompress_from_cli(args.input_val);
+                app_status = decompress_from_cli(args.input_val);
             }
             break;
         }
@@ -53,6 +55,11 @@ app_status_t app(arg_t args) {
             /* Should never happen */
             break;
         }
+    }
+
+    if (app_status == APP_STATUS_ERROR) {
+        printf("Error! Application status code: %d\n", app_status);
+        return APP_STATUS_ERROR;
     }
 
     return APP_STATUS_SUCCESS;
