@@ -1,12 +1,14 @@
-# Canonical Huffman code
+# Canonical Huffman code for compression
 This repo contains *Canonical Huffman code* implementation from scratch, which can be used for text and files compression.
 
 ### Project structure
 In the project directory you can find the following:
 1. **main.c** - the main file, contains the main program logic,
 2. **src** - directory, contains sources for main.c file:
-    1. **arg_parser** - parse command line arguments,
-    2. **io** - read content from file.
+   - **app** - contains state machine for compress and decompress data,
+   - **base_huffman** - contains logic for frequency table, Huffman Tree and Huffman codes,
+   - **canonical_huffman** - contains logic for Canonical Huffman codes,
+   - **io_utils** - contains utils for parsing program options, read and write metadata and data to file and cli.
 
 # Algorithm Overview
 ### Compression steps:
@@ -46,11 +48,21 @@ make
 ```
 after compiling is completed, **main** executable file can be found in directory *build/*. 
 
-## Compression and decompression
+## Running program
+To run **main** program the following command:
+```console
+./build/main
+```
+also don't forget to provide *program options* for input, output and operation.
+
+## Available program options
 To compress files or text by running **main** program you should also provide paths some arguments:
-1. use *-i* or *--input* to compress file,
-2. use *-m* or *--msg* to compress text from command line,
-3. use *-o* or *--output* to provide output file path.
+- use *-i* or *--input* to compress file,
+- use *-m* or *--msg* to compress text from command line,
+- use *-o* or *--output* to provide output file path.
 
 **NOTE**: *-i* and *-m* options are both xor, so you can choose one of them, otherwise program terminates with error.
 Option *-o* optional, so if it's not specified the output will be printed to the command line.
+
+**NOTE**: after decoding data all necessary metadata are saved in *.metadata* file. It can not be changed with program options, this is hardcoded name. 
+**Do not change this file!**
