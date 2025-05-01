@@ -19,6 +19,10 @@ static app_status_t compress_from_file(char* input_file_name, char* output_file_
 
 static app_status_t decompress_from_file(char* input_file_name, char* output_file_name, decode_metadata_t* metadata);
 
+static app_status_t compress_from_cli(char* data);
+
+static app_status_t decompress_from_cli(char* data);
+
 /**************************** INTERFACE FUNCTIONS ****************************/
 app_status_t app(arg_t args) {
   app_status_t app_status = APP_STATUS_UNDEFINED;
@@ -28,6 +32,10 @@ app_status_t app(arg_t args) {
             if (args.input_type == INPUT_FILE) {
                 /* Read data from file and encode it */
                 app_status = compress_from_file(args.input_val, args.output_val);
+            }
+            else {
+                /* Read data from stdin and encode it */
+                app_status = compress_from_cli(args.input_val);
             }
 
             break;
@@ -40,6 +48,10 @@ app_status_t app(arg_t args) {
             if (args.input_type == INPUT_FILE) {
                 /* Read data from file and decode it */
                 app_status = decompress_from_file(args.input_val, args.output_val, metadata);
+            }
+            else {
+                /* Read data from stdin and decode it */
+             	app_status = decompress_from_cli(args.input_val);
             }
 
             break;
@@ -120,5 +132,15 @@ static app_status_t decompress_from_file(char* input_file_name, char* output_fil
         (void)save_decoded(output_file_name, &decoded_content);
     }
 
+    return APP_STATUS_SUCCESS;
+}
+
+static app_status_t compress_from_cli(char* data)
+{
+    return APP_STATUS_SUCCESS;
+}
+
+static app_status_t decompress_from_cli(char* data)
+{
     return APP_STATUS_SUCCESS;
 }
