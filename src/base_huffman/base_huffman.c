@@ -55,39 +55,6 @@ freq_table_t get_freq_table(char* content)
     return freq_table;
 }
 
-huff_tree_t get_huff_tree(freq_table_t* freq_table)
-{
-    int tree_size = 2 * freq_table->size - 1;
-    huff_tree_node_t* nodes = (huff_tree_node_t*)calloc(tree_size, sizeof(huff_tree_node_t));
-    huff_tree_t tree = { .nodes = nodes, .size = tree_size };
-
-    for (int i = 0; i < freq_table->size; i++) {
-        tree.nodes[i].chr = freq_table->frequencies[i].chr;
-        tree.nodes[i].freq = freq_table->frequencies[i].freq;
-        tree.nodes[i].code = UNDEFINED_CODE;
-        tree.nodes[i].left = NULL;
-        tree.nodes[i].right = NULL;
-    }
-
-    int empty_node_index = freq_table->size;
-
-    for (int i = 0; i < tree_size-2; i+=2) {
-        tree.nodes[empty_node_index].chr = COMBINED_CHARACTER;
-        tree.nodes[empty_node_index].freq = tree.nodes[i].freq + tree.nodes[i+1].freq;
-        tree.nodes[empty_node_index].code = UNDEFINED_CODE;
-        tree.nodes[empty_node_index].code_len = 0;
-        tree.nodes[empty_node_index].left = &tree.nodes[i];
-        tree.nodes[empty_node_index].right = &tree.nodes[i+1];
-        empty_node_index += 1;
-        qsort(tree.nodes, empty_node_index, sizeof(huff_tree_node_t), compare_tree_nodes);
-    }
-
-    huff_tree_node_t result_node = tree.nodes[tree_size - 1];
-    set_node_code(&result_node);
-
-    return tree;
-}
-
 huff_table_t get_base_huff(huff_tree_t* tree, int leaf_count)
 {
     huff_code_t* huffman_code = (huff_code_t*)calloc(leaf_count, sizeof(huff_code_t));

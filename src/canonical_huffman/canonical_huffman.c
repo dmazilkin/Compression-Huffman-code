@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "canonical_huffman.h"
 #include "base_huffman.h"
@@ -7,31 +8,74 @@
 #define START_CODE 0
 #define START_CODE_LEN 1
 
+/**************************** STATIC FUNCTION DECLARATIONS ****************************/
+static int compare_huff_codes(const void* p1, const void* p2);
+
 /**************************** INTERFACE FUNCTIONS ****************************/
-canonical_huff_table_t get_canonical_huff(huff_table_t* huff_table)
+canonical_huff_table_t get_canonical_huff(huff_code_t* huff_codes, canonical_huff_code_t* canonical_huff_code, int size)
 {
-    int size = huff_table->size;
-    canonical_huff_code_t* codes = (canonical_huff_code_t*)calloc(size, sizeof(canonical_huff_code_t));
-    canonical_huff_table_t canonical_huff = { .codes = codes, .size = size };
+    canonical_huff_table_t canonical_huff = {
+      .codes = canonical_huff_code,
+      .size = size
+    };
 
-    canonical_huff.codes[0].chr = huff_table->codes[0].chr;
-    canonical_huff.codes[0].code = START_CODE;
-    canonical_huff.codes[0].code_len = huff_table->codes[0].code_len;
+    qsort(huff_codes, size, sizeof(huff_code_t), compare_huff_codes);
 
-    for (int i = 1; i < size; i++) {
-        canonical_huff.codes[i].chr = huff_table->codes[i].chr;
-        canonical_huff.codes[i].code = canonical_huff.codes[i-1].code + 1;
-        int code_len_diff = huff_table->codes[i].code_len - huff_table->codes[i-1].code_len;
+    int is_initialized = 0;
+    int prev_canonical_ind = 0;
+    int huff_code_ind = 0;
 
-        if (code_len_diff) {
-            canonical_huff.codes[i].code <<= code_len_diff;
-            canonical_huff.codes[i].code_len = canonical_huff.codes[i-1].code_len + code_len_diff;
-        } else {
-            canonical_huff.codes[i].code_len = canonical_huff.codes[i-1].code_len;
+    while(huff_codes[huff_code_ind].code_len == 0) {
+      huff_code_ind++;
+    }
+
+    while (huff_code_ind < size) {
+        char ind = huff_codes[huff_code_ind].chr;
+
+        if (is_initialized == 0) {
+            canonical_huff.codes[(int)ind].chr = huff_codes[huff_code_ind].chr;
+            canonical_huff.codes[(int)ind].code = START_CODE;
+            canonical_huff.codes[(int)ind].code_len = huff_codes[huff_code_ind].code_len;
+            is_initialized = 1;
         }
+        else {
+            canonical_huff.codes[(int)ind].chr = huff_codes[huff_code_ind].chr;
+            canonical_huff.codes[(int)ind].code = canonical_huff.codes[prev_canonical_ind].code + 1;
+            int code_len_diff = huff_codes[huff_code_ind].code_len - huff_codes[huff_code_ind-1].code_len;
+
+            if (code_len_diff) {
+                canonical_huff.codes[(int)ind].code <<= code_len_diff;
+                canonical_huff.codes[(int)ind].code_len = canonical_huff.codes[prev_canonical_ind].code_len + code_len_diff;
+            } else {
+                canonical_huff.codes[(int)ind].code_len = canonical_huff.codes[prev_canonical_ind].code_len;
+            }
+        }
+
+        prev_canonical_ind = (int)ind;
+        huff_code_ind++;
     }
 
     return canonical_huff;
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
+static int compare_huff_codes(const void* p1, const void* p2)
+{
+    huff_code_t* code1 = (huff_code_t*)p1;
+    huff_code_t* code2 = (huff_code_t*)p2;
+
+    if (code1->code_len > code2->code_len) {
+        return 1;
+    }
+    else if (code1->code_len < code2->code_len) {
+        return -1;
+    }
+    else {
+        if (code1->chr > code2->chr) {
+            return 1;
+        }
+        else {
+            return -1;
+        }
+    }
+}
