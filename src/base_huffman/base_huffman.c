@@ -15,8 +15,6 @@ static int look_up_table[ASCII_TABLE_SIZE] = { 0 };
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 static int compare_huff_code(const void* code1, const void* code2);
 
-static void set_node_code(huff_tree_node_t* node);
-
 static int compare_freq_table(const void* elem1, const void* elem2);
 
 static int compare_tree_nodes(const void* node1, const void* node2);
@@ -104,30 +102,6 @@ static int compare_tree_nodes(const void* node1, const void* node2)
     } else {
         return 1;
     }
-}
-
-static void set_node_code(huff_tree_node_t* node)
-{
-    huff_tree_node_t* left = (huff_tree_node_t*)node->left;
-    huff_tree_node_t* right = (huff_tree_node_t*)node->right;
-
-    if ((left != NULL) && (right != NULL)) {
-        if (node->code != UNDEFINED_CODE) {
-            left->code = (node->code << 1) | LEFT_CODE;
-            left->code_len += node->code_len + 1;
-            right->code = (node->code << 1) | RIGHT_CODE;
-            right->code_len += node->code_len + 1;
-        } else {
-            left->code = LEFT_CODE;
-            left->code_len = 1;
-            right->code = RIGHT_CODE;
-            right->code_len = 1;
-        }
-        set_node_code(left);
-        set_node_code(right);
-    }
-
-    return;
 }
 
 static int compare_huff_code(const void* code1, const void* code2)

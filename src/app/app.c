@@ -14,9 +14,8 @@
 /**************************** STATIC VARIABLES ****************************/
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
-static app_status_t compress_from_file(char* input_file_name, char* output_file_name);
 
-static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* output_file_name);
+static app_status_t compress_from_file(char* input_file_name, char* output_file_name);
 
 static app_status_t decompress_from_file(char* input_file_name, char* output_file_name, decode_metadata_t* metadata);
 
@@ -32,7 +31,7 @@ app_status_t app(arg_t args) {
     case COMPRESSION: {
             if (args.input_type == INPUT_FILE) {
                 /* Read data from file and encode it */
-                app_status = TEST_compress_from_file_chunk(args.input_val, args.output_val);
+                app_status = compress_from_file(args.input_val, args.output_val);
             } else {
                 /* Read and encode data from cli */
                 app_status = compress_from_cli(args.input_val);
@@ -68,30 +67,7 @@ app_status_t app(arg_t args) {
 }
 
 /**************************** STATIC FUNCTION DEFINITIONS ****************************/
-//static app_status_t compress_from_file(char* input_file_name, char* output_file_name)
-//{
-//    /* Read content to compress */
-//    char* content = NULL;
-//
-//    /* Read data from file and encode it */
-//    file_status_t status = read_to_encode_from_file(input_file_name, &content);
-//
-//    if (status == FILE_READ_NOT_FOUND) {
-//        printf("Error! Status code %d: File not found!\n", status);
-//        return APP_STATUS_ERROR;
-//    }
-//
-//    /* Encode content */
-//    canonical_huff_table_t huff = huffman_encode(content);
-//    /* Write Huffman code to file */
-//    (void)save_encoded(&huff, content, output_file_name);
-//    /* Save metadata to file */
-//    (void)save_metadata(&huff);
-//
-//    return APP_STATUS_SUCCESS;
-//}
-
-static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* output_file_name)
+static app_status_t compress_from_file(char* input_file_name, char* output_file_name)
 {
     char data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
     read_content_t read_content = { .content = data, .content_size = 0, .is_eof = 0, .file = NULL };
@@ -110,19 +86,9 @@ static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* o
     huff_code_t codes[ASCII_SIZE] = { { .chr=0, .code=0, .code_len=0 } };
     calculate_huff_codes(codes, &freq_table, huff_tree_size);
 
-//    for (int i = 0; i < ASCII_SIZE; i++) {
-//        printf("%c[%d]: code=%d, code_len=%d\n", codes[i].chr, i, codes[i].code, codes[i].code_len);
-//    }
-
     /* Calculate Canonical Huffman code */
     canonical_huff_code_t* canonical_codes = (canonical_huff_code_t*)calloc(ASCII_SIZE, sizeof(canonical_huff_code_t));
     canonical_huff_table_t canonical_huff_codes = get_canonical_huff(codes, canonical_codes, ASCII_SIZE);
-
-//    for (int i = 0; i < ASCII_SIZE; i++) {
-//        if (canonical_huff_codes.codes[i].code_len != 0) {
-//            printf("%c[%d]: code=%d, len=%d\n", canonical_huff_codes.codes[i].chr, (int)canonical_huff_codes.codes[i].chr, canonical_huff_codes.codes[i].code, canonical_huff_codes.codes[i].code_len);
-//        }
-//    }
 
     char data_to_encode[CHUNK_SIZE*BYTE_SIZE] = { 0 };
     read_content_t read_content_to_encode = { .content = data_to_encode, .content_size = 0, .is_eof = 0, .file = NULL };

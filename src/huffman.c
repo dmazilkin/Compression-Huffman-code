@@ -89,9 +89,6 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
   char chr_to_encode = content.content[content_ind];
   int code = huff_table->codes[chr_to_encode].code;
   int code_len = huff_table->codes[chr_to_encode].code_len;
-//  printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
-//  printf("code=%d, len=%d\n", code, code_len);
-//  printf("byte=%d, byte_len=%d\n", 0, 0);
 
   char is_ready = 0;
 
@@ -109,10 +106,6 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
       chr_to_encode = content.content[content_ind];
       code = huff_table->codes[chr_to_encode].code;
       code_len = huff_table->codes[chr_to_encode].code_len;
-//      printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
-//      printf("code=%d, len=%d\n", code, code_len);
-//      printf("byte=%d, byte_len=%d\n", byte, byte_len);
-//      printf("encoded bytes: %d\n", encoded_content_ind);
       is_ready = 0;
     }
 
@@ -122,8 +115,6 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
         code_len--;
         byte_len++;
       }
-
-//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
 
       if (byte_len == BYTE_SIZE) {
         /* Save byte of encoded data */
@@ -145,8 +136,6 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
         byte_len++;
       }
 
-//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
-
       if (byte_len == BYTE_SIZE) {
         /* Save byte of encoded data */
         encoded_content.content[encoded_content_ind] = byte;
@@ -165,8 +154,6 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
   encoded_content.content_size = encoded_content_ind;
 
   if (byte_len != 0) {
-    printf("Not filled last byte.\n");
-    printf("Byte: code=%d, len=%d\n", byte, byte_len);
 
     if (content.is_eof) {
       encoded_content.content[encoded_content_ind] = byte;
@@ -176,16 +163,12 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
     else {
       *unencoded_code = byte;
       *unencoded_code_len = byte_len;
-      printf("WARNING: Buffer: code=%d, len=%d\n", *unencoded_code, *unencoded_code_len);
     }
   }
   else {
     *unencoded_code = 0;
     *unencoded_code_len = 0;
   }
-
-  printf("Content size: %d\n", encoded_content.content_size);
-  printf("Character encoded: %d\n", content_ind);
 
   return encoded_content;
 }
