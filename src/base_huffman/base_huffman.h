@@ -32,6 +32,8 @@ typedef struct {
     char chr;
     int code;
     int code_len;
+    void* left;
+    void* right;
 } huff_code_t;
 
 typedef struct {

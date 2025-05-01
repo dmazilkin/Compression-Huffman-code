@@ -20,6 +20,8 @@ typedef struct {
 
 decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len);
 
+encoded_content_t huffman_encode(read_content_t content, char* encoded_data, canonical_huff_table_t* huff_table);
+
 void update_freq_table(read_content_t* read_content, freq_table_t* freq_table);
 
 freq_table_t create_freq_table(char_freq_t* frequencies);

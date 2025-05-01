@@ -24,6 +24,11 @@ typedef struct {
 } encode_metadata_t;
 
 typedef struct {
+  char* content;
+  int content_size;
+} encoded_content_t;
+
+typedef struct {
   int code;
   int code_len;
   int shift;
@@ -53,7 +58,7 @@ file_status_t save_metadata(canonical_huff_table_t* huff);
 
 file_status_t read_metadata(decode_metadata_t* metadata);
 
-file_status_t save_encoded(canonical_huff_table_t* huff, char* content, char* file_name);
+file_status_t save_encoded(char* file_name, encoded_content_t* content);
 
 file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content);
 

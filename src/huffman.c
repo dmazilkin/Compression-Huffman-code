@@ -74,7 +74,6 @@ void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff
 
   /* Calculate Huffman code */
   min_heap_node_t* peak = &(min_heap.nodes[0]);
-  printf("peak length: %d\n", peak->code_len);
   peak->chr = UNDEFINED_CODE;
   set_node_code(peak, codes);
 
@@ -143,9 +142,9 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes)
   if ((left != NULL) && (right != NULL)) {
     if (node->code != UNDEFINED_CODE) {
       left->code = (node->code << 1) | LEFT_CODE;
-      left->code_len += node->code_len + 1;
+      left->code_len = node->code_len + 1;
       right->code = (node->code << 1) | RIGHT_CODE;
-      right->code_len += node->code_len + 1;
+      right->code_len = node->code_len + 1;
     } else {
       left->code = LEFT_CODE;
       left->code_len = 1;
@@ -169,18 +168,6 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes)
   return;
 }
 
-static int compare_tree_nodes(const void* node1, const void* node2)
-{
-  huff_tree_node_t* tree_node1 = (huff_tree_node_t*)node1;
-  huff_tree_node_t* tree_node2 = (huff_tree_node_t*)node2;
-
-  if (tree_node1->freq < tree_node2->freq) {
-    return -1;
-  } else {
-    return 1;
-  }
-}
-
 static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size)
 {
   min_heap_t min_heap = { .nodes=nodes, .size=huff_tree_size };
@@ -190,23 +177,11 @@ static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nod
 
   for (int i = 0; i < freq_table->size; i++) {
     if (freq_table->frequencies[i].freq > 0) {
-      if (is_initialized == 0) {
-        min_heap.nodes[0].freq = freq_table->frequencies[i].freq;
-        min_heap.nodes[0].chr = freq_table->frequencies[i].chr;
-        is_initialized = 1;
-      }
-      else if (min_heap.nodes[2*empty_ind + 1].freq == 0) {
-        int left_ind = 2*empty_ind + 1;
-        min_heap.nodes[left_ind].chr = freq_table->frequencies[i].chr;
-        min_heap.nodes[left_ind].freq = freq_table->frequencies[i].freq;
-        bubble_up(&min_heap, left_ind);
-      } else {
-        int right_ind = 2*(empty_ind + 1);
-        min_heap.nodes[right_ind].chr = freq_table->frequencies[i].chr;
-        min_heap.nodes[right_ind].freq = freq_table->frequencies[i].freq;
-        empty_ind++;
-        bubble_up(&min_heap, right_ind);
-      }
+      min_heap_node_t node = {
+        .chr = freq_table->frequencies[i].chr,
+        .freq = freq_table->frequencies[i].freq,
+      };
+      insert_and_update(&min_heap, node);
     }
   }
 
