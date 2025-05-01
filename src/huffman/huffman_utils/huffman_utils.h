@@ -1,5 +1,8 @@
-#ifndef BASE_HUFFMAN_H
-#define BASE_HUFFMAN_H
+#ifndef HUFFMAN_UTILS_H
+#define HUFFMAN_UTILS_H
+
+#include "file_utils.h"
+#include "canonical_huffman.h"
 
 typedef struct {
     char chr;
@@ -41,8 +44,8 @@ typedef struct {
     int size;
 } huff_table_t;
 
-freq_table_t get_freq_table(char* content);
+freq_table_t create_freq_table(char_freq_t* frequencies);
 
-huff_table_t get_base_huff(huff_tree_t* tree, int leaf_count);
+void update_freq_table(read_content_t* read_content, freq_table_t* freq_table);
 
-#endif //BASE_HUFFMAN_H
+#endif //HUFFMAN_UTILS_H

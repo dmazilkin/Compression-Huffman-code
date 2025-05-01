@@ -2,6 +2,12 @@
 
 #include "arg_parser.h"
 
+/**************************** DEFINES ****************************/
+
+/**************************** STATIC VARIABLES ****************************/
+
+/**************************** STATIC FUNCTION DECLARATIONS ****************************/
+
 /**************************** INTERFACE FUNCTIONS ****************************/
 parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
     for (int i = 1; i < argc; i++) {
@@ -57,3 +63,4 @@ parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
 
     return PARSE_SUCCESS;
 }
+/**************************** STATIC FUNCTION DEFINITIONS ****************************/

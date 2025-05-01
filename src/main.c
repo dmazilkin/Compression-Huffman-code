@@ -22,6 +22,8 @@ int main(int argc, char* argv[]) {
         .operation = OPERATION_UNDEFINED,
     };
 
+    printf("Start application...\n");
+
     parser_status_t status = parse_args(argc, argv, &arguments);
 
     /* Check if provided option is available */
@@ -36,12 +38,19 @@ int main(int argc, char* argv[]) {
       return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
+    char* operation = (arguments.operation == COMPRESSION) ? "Compressing" : "Decompressing";
+    printf("%s from \"%s\"...", operation, arguments.input_val);
+
     /* Start application */
     app_status_t app_status = app(arguments);
 
     if (app_status == APP_STATUS_ERROR) {
       printf("Error! Application status code: %d\n", app_status);
     }
+
+    printf("Done.\n");
+    printf("Result can be found in \"%s\".\n", arguments.output_val);
+    printf("Exiting application.\n");
 
     return 0;
 }

@@ -19,6 +19,13 @@ typedef enum {
   DECOMPRESSION,
 } operation_t;
 
+typedef enum {
+  PARSE_SUCCESS=0,
+  PARSE_ERROR_UNDEFINED_INPUT,
+  PARSE_ERROR_UNKNOWN_OPTION,
+  PARSE_ERROR_UNDEFINED_OPERATION,
+} parser_status_t;
+
 typedef struct {
   option_input_t input_type;
   char* input_val;
@@ -26,13 +33,6 @@ typedef struct {
   char* output_val;
   operation_t operation;
 } arg_t;
-
-typedef enum {
-  PARSE_SUCCESS=0,
-  PARSE_ERROR_UNDEFINED_INPUT,
-  PARSE_ERROR_UNKNOWN_OPTION,
-  PARSE_ERROR_UNDEFINED_OPERATION,
-} parser_status_t;
 
 parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst);
 

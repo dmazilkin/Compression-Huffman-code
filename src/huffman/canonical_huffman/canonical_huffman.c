@@ -1,8 +1,7 @@
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "canonical_huffman.h"
-#include "base_huffman.h"
+#include "huffman_utils.h"
 
 /**************************** DEFINES ****************************/
 #define START_CODE 0

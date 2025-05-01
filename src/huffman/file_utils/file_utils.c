@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "file_utils.h"
+#include "canonical_huffman.h"
 
 /**************************** DEFINES ****************************/
-#define DEFAULT_SIZE 64
 #define BYTE_SIZE 8
 #define METADATA ".metadata"
 
@@ -15,32 +15,6 @@ static int prev_chr = 0;
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 
 /**************************** INTERFACE FUNCTIONS ****************************/
-file_status_t read_to_encode_from_file(char* file_name, char** content) {
-    int content_size = DEFAULT_SIZE;
-    *content = (char*)calloc(DEFAULT_SIZE, sizeof(char));
-
-    FILE* file = fopen(file_name, "rb");
-
-    if (file == NULL) {
-        return FILE_READ_NOT_FOUND;
-    }
-
-    int symb = fgetc(file);
-    int ind = 0;
-
-    while (symb != EOF) {
-        if (ind >= content_size - 1) {
-            content_size += DEFAULT_SIZE;
-            *content = (char*)realloc(*content, content_size * sizeof(char));
-        }
-        *(*content+ind) = (char)symb;
-        symb = fgetc(file);
-        ind++;
-    }
-
-    return FILE_READ_SUCCESS;
-}
-
 file_status_t read_chunk_to_encode(char* file_name, read_content_t* read_content, int chunk_size)
 {
     if (read_content->file == NULL) {

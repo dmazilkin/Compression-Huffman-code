@@ -3,14 +3,15 @@ This repo contains *Canonical Huffman code* implementation from scratch, which c
 
 ### Project structure
 In the project directory you can find the following:
-1. **main.c** - the main file, contains the main program logic,
-2. **src** - directory, contains sources for main.c file:
+- **src** - main directory, contains all sources for compiling executable:
    - **app** - contains state machine for compress and decompress data,
-   - **base_huffman** - contains logic for frequency table, Huffman Tree and Huffman codes,
+   - **arg_parser** - parser for program options,
+   - **huffman_utils** - contains logic for frequency table, Huffman Tree and Huffman codes,
    - **canonical_huffman** - contains logic for Canonical Huffman codes,
    - **io_utils** - contains utils for parsing program options, read and write metadata and data to file and cli.
 
 # Algorithm Overview
+![AlgorithmScheme](docs/HuffmanScheme.png)
 ### Compression steps:
 1. Read data:
    - data is read in chunks until eof is reached.
@@ -46,12 +47,12 @@ First you need to compile source files into one executable file. Simply start Ma
 ```console
 make 
 ```
-after compiling is completed, **main** executable file can be found in directory *build/*. 
+after compiling is completed, **huffman** executable file can be found in directory *build/*. 
 
 ## Running program
 To run **main** program the following command:
 ```console
-./build/main
+./build/huffman
 ```
 also don't forget to provide *program options* for input, output and operation.
 

@@ -22,10 +22,6 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
 
 encoded_content_t huffman_encode(read_content_t content, char* encoded_data, canonical_huff_table_t* huff_table, int* unencoded_code, int* unencoded_code_len);
 
-void update_freq_table(read_content_t* read_content, freq_table_t* freq_table);
-
-freq_table_t create_freq_table(char_freq_t* frequencies);
-
 void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff_tree_size);
 
 #endif //HUFFMAN_H

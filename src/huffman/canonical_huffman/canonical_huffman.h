@@ -1,7 +1,7 @@
 #ifndef CANONICAL_HUFFMAN_H
 #define CANONICAL_HUFFMAN_H
 
-#include "base_huffman.h"
+#include "huffman_utils.h"
 
 typedef struct {
     char chr;
