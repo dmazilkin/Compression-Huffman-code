@@ -21,10 +21,6 @@ canonical_huff_table_t get_canonical_huff(huff_code_t* huff_codes, canonical_huf
 
     qsort(huff_codes, size, sizeof(huff_code_t), compare_huff_codes);
 
-//    for (int i = 0; i < size; i++) {
-//        printf("%c[%d]: code=%d, code_len=%d\n", huff_codes[i].chr, i, huff_codes[i].code, huff_codes[i].code_len);
-//    }
-
     int is_initialized = 0;
     int prev_canonical_ind = 0;
     int huff_code_ind = 0;
@@ -41,7 +37,6 @@ canonical_huff_table_t get_canonical_huff(huff_code_t* huff_codes, canonical_huf
             canonical_huff.codes[(int)ind].code = START_CODE;
             canonical_huff.codes[(int)ind].code_len = huff_codes[huff_code_ind].code_len;
             is_initialized = 1;
-
         }
         else {
             canonical_huff.codes[(int)ind].chr = huff_codes[huff_code_ind].chr;

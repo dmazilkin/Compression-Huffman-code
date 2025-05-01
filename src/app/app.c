@@ -110,6 +110,10 @@ static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* o
     huff_code_t codes[ASCII_SIZE] = { { .chr=0, .code=0, .code_len=0 } };
     calculate_huff_codes(codes, &freq_table, huff_tree_size);
 
+//    for (int i = 0; i < ASCII_SIZE; i++) {
+//        printf("%c[%d]: code=%d, code_len=%d\n", codes[i].chr, i, codes[i].code, codes[i].code_len);
+//    }
+
     /* Calculate Canonical Huffman code */
     canonical_huff_code_t* canonical_codes = (canonical_huff_code_t*)calloc(ASCII_SIZE, sizeof(canonical_huff_code_t));
     canonical_huff_table_t canonical_huff_codes = get_canonical_huff(codes, canonical_codes, ASCII_SIZE);
@@ -120,17 +124,21 @@ static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* o
 //        }
 //    }
 
-//    char data_to_encode[CHUNK_SIZE*BYTE_SIZE] = { 0 };
-//    read_content_t read_content_to_encode = { .content = data_to_encode, .content_size = 0, .is_eof = 0, .file = NULL };
-//
-//    while (read_content.is_eof != 1) {
-//        /* Read data in chunks */
-//        (void)read_chunk_to_encode(input_file_name, &read_content_to_encode, CHUNK_SIZE);
-//        /* Encode data chunk and save it */
-//        char encoded_data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
-//        encoded_content_t encoded_content = huffman_encode(read_content_to_encode, encoded_data, &look_up_table);
-//        save_encoded(output_file_name, &encoded_content);
-//    }
+    char data_to_encode[CHUNK_SIZE*BYTE_SIZE] = { 0 };
+    read_content_t read_content_to_encode = { .content = data_to_encode, .content_size = 0, .is_eof = 0, .file = NULL };
+    int unencoded_code = 0;
+    int unencoded_code_len = 0;
+
+    while (read_content_to_encode.is_eof != 1) {
+        /* Read data in chunks */
+        (void)read_chunk_to_encode(input_file_name, &read_content_to_encode, CHUNK_SIZE);
+        /* Encode data chunk and save it */
+        char encoded_data[CHUNK_SIZE*BYTE_SIZE] = { 0 };
+        encoded_content_t encoded_content = huffman_encode(read_content_to_encode, encoded_data, &canonical_huff_codes, &unencoded_code, &unencoded_code_len);
+        save_encoded(output_file_name, &encoded_content);
+    }
+
+    save_metadata(&canonical_huff_codes);
 
     return APP_STATUS_SUCCESS;
 }

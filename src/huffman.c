@@ -9,7 +9,6 @@
 /**************************** DEFINES ****************************/
 #define ASCII_SIZE 128
 #define BYTE_SIZE 8
-#define UNDEFINED_CODE -1
 #define NOT_INITIALIZED 0
 #define COMBINED_CHARACTER 0
 #define RIGHT_CODE 0
@@ -22,7 +21,7 @@ static min_heap_node_t* pop_min(min_heap_t* min_heap, min_heap_t* buff_huff_code
 
 static void insert_and_update(min_heap_t* huff_tree, min_heap_node_t new_node);
 
-static void set_node_code(min_heap_node_t* node, huff_code_t* codes);
+static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_start);
 
 static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size);
 
@@ -70,14 +69,125 @@ void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff
   int buff_nodes_count = 2*huff_tree_size-1;
   min_heap_node_t* buff_nodes = (min_heap_node_t*)calloc(buff_nodes_count, sizeof(min_heap_node_t));
   min_heap_t buff_min_heap = { .nodes=buff_nodes, .size=0 };
+
   build_huff_tree(&min_heap, &buff_min_heap);
 
   /* Calculate Huffman code */
   min_heap_node_t* peak = &(min_heap.nodes[0]);
-  peak->chr = UNDEFINED_CODE;
-  set_node_code(peak, codes);
+  set_node_code(peak, codes, 1);
 
   return;
+}
+
+encoded_content_t huffman_encode(read_content_t content, char* encoded_data, canonical_huff_table_t* huff_table, int* unencoded_code, int* unencoded_code_len)
+{
+  encoded_content_t encoded_content = { .content = encoded_data, .content_size = 0 };
+
+  int encoded_content_ind = 0;
+  int content_ind = 0;
+
+  char chr_to_encode = content.content[content_ind];
+  int code = huff_table->codes[chr_to_encode].code;
+  int code_len = huff_table->codes[chr_to_encode].code_len;
+//  printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
+//  printf("code=%d, len=%d\n", code, code_len);
+//  printf("byte=%d, byte_len=%d\n", 0, 0);
+
+  char is_ready = 0;
+
+  unsigned char byte = 0;
+  unsigned char byte_len = 0;
+
+  if (*unencoded_code_len != 0) {
+    byte = *unencoded_code;
+    byte_len = *unencoded_code_len;
+  }
+
+  while (content_ind < content.content_size) {
+
+    if (is_ready) {
+      chr_to_encode = content.content[content_ind];
+      code = huff_table->codes[chr_to_encode].code;
+      code_len = huff_table->codes[chr_to_encode].code_len;
+//      printf("Start encode: %c[ind=%d]\n", chr_to_encode, encoded_content_ind);
+//      printf("code=%d, len=%d\n", code, code_len);
+//      printf("byte=%d, byte_len=%d\n", byte, byte_len);
+//      printf("encoded bytes: %d\n", encoded_content_ind);
+      is_ready = 0;
+    }
+
+    if (BYTE_SIZE - byte_len >= code_len) {
+      while (code_len > 0) {
+        byte |= ((code & (0b1 << (code_len - 1))) ? 1 : 0) << (BYTE_SIZE - byte_len - 1);
+        code_len--;
+        byte_len++;
+      }
+
+//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
+
+      if (byte_len == BYTE_SIZE) {
+        /* Save byte of encoded data */
+        encoded_content.content[encoded_content_ind] = byte;
+        byte_len = 0;
+        byte = 0;
+        /* Ready to fill next byte */
+        encoded_content_ind++;
+      }
+
+      /* Ready to encode next character */
+      content_ind++;
+      is_ready = 1;
+    }
+    else {
+      while (BYTE_SIZE - byte_len > 0) {
+        byte |= ((code & (0b1 << (code_len - 1))) ? 1 : 0) << (BYTE_SIZE - byte_len - 1);
+        code_len--;
+        byte_len++;
+      }
+
+//      printf("After encode: byte=%d, byte_len=%d\n", byte, byte_len);
+
+      if (byte_len == BYTE_SIZE) {
+        /* Save byte of encoded data */
+        encoded_content.content[encoded_content_ind] = byte;
+        byte = 0;
+        byte_len = 0;
+
+      }
+
+      /* Ready to fill next byte */
+      encoded_content_ind++;
+      /* Encode remaining bits */
+      is_ready = 0;
+    }
+  }
+
+  encoded_content.content_size = encoded_content_ind;
+
+  if (byte_len != 0) {
+    printf("Not filled last byte.\n");
+    printf("Byte: code=%d, len=%d\n", byte, byte_len);
+
+    if (content.is_eof) {
+      encoded_content.content[encoded_content_ind] = byte;
+      huff_table->shift = BYTE_SIZE - byte_len;
+      encoded_content.content_size++;
+    }
+    else {
+      *unencoded_code = byte;
+      *unencoded_code_len = byte_len;
+      printf("WARNING: Buffer: code=%d, len=%d\n", *unencoded_code, *unencoded_code_len);
+    }
+  }
+  else {
+    *unencoded_code = 0;
+    *unencoded_code_len = 0;
+  }
+
+  printf("Content size: %d\n", encoded_content.content_size);
+  printf("Character encoded: %d\n", content_ind);
+
+  return encoded_content;
 }
 
 decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len)
@@ -134,13 +244,13 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
 }
 
 /**************************** STATIC FUNCTIONS ****************************/
-static void set_node_code(min_heap_node_t* node, huff_code_t* codes)
+static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_start)
 {
   min_heap_node_t* left = (min_heap_node_t*)node->left;
   min_heap_node_t* right = (min_heap_node_t*)node->right;
 
   if ((left != NULL) && (right != NULL)) {
-    if (node->code != UNDEFINED_CODE) {
+    if (!(is_start)) {
       left->code = (node->code << 1) | LEFT_CODE;
       left->code_len = node->code_len + 1;
       right->code = (node->code << 1) | RIGHT_CODE;
@@ -153,16 +263,20 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes)
     }
 
     /* Set left parent */
-    codes[left->chr].chr = left->chr;
-    codes[left->chr].code = left->code;
-    codes[left->chr].code_len = left->code_len;
+    if (left->chr != COMBINED_CHARACTER) {
+      codes[left->chr].chr = left->chr;
+      codes[left->chr].code = left->code;
+      codes[left->chr].code_len = left->code_len;
+    }
     /* Set right parent */
-    codes[right->chr].chr = right->chr;
-    codes[right->chr].code = right->code;
-    codes[right->chr].code_len = right->code_len;
+    if (right->chr != COMBINED_CHARACTER) {
+      codes[right->chr].chr = right->chr;
+      codes[right->chr].code = right->code;
+      codes[right->chr].code_len = right->code_len;
+    }
 
-    set_node_code(left, codes);
-    set_node_code(right, codes);
+    set_node_code(left, codes, 0);
+    set_node_code(right, codes, 0);
   }
 
   return;
@@ -170,7 +284,7 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes)
 
 static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size)
 {
-  min_heap_t min_heap = { .nodes=nodes, .size=huff_tree_size };
+  min_heap_t min_heap = { .nodes=nodes, .size=0 };
 
   int is_initialized = 0;
   int empty_ind = 0;
@@ -180,6 +294,8 @@ static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nod
       min_heap_node_t node = {
         .chr = freq_table->frequencies[i].chr,
         .freq = freq_table->frequencies[i].freq,
+        .left = NULL,
+        .right = NULL,
       };
       insert_and_update(&min_heap, node);
     }
