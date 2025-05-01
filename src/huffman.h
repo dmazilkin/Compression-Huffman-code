@@ -5,7 +5,16 @@
 #include "file_utils.h"
 
 typedef struct {
-    char_freq_t* nodes;
+    char chr;
+    int freq;
+    int code;
+    int code_len;
+    void* left;
+    void* right;
+} min_heap_node_t;
+
+typedef struct {
+    min_heap_node_t* nodes;
     int size;
 } min_heap_t;
 
@@ -15,6 +24,6 @@ void update_freq_table(read_content_t* read_content, freq_table_t* freq_table);
 
 freq_table_t create_freq_table(char_freq_t* frequencies);
 
-min_heap_t get_huff_tree(freq_table_t* freq_table, char_freq_t* nodes, int huff_tree_size);
+void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff_tree_size);
 
 #endif //HUFFMAN_H

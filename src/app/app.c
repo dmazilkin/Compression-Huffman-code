@@ -105,13 +105,13 @@ static app_status_t TEST_compress_from_file_chunk(char* input_file_name, char* o
         update_freq_table(&read_content, &freq_table);
     }
 
-    int huff_tree_size = 2 * freq_table.non_zero_count - 1;
-    char_freq_t* nodes = (char_freq_t*)calloc(huff_tree_size, sizeof(freq_table.frequencies[0]));
-    min_heap_t huff_tree = get_huff_tree(&freq_table, nodes, huff_tree_size);
+    int huff_tree_size = freq_table.non_zero_count;
+    huff_code_t codes[ASCII_SIZE] = { { .chr=0, .code=0, .code_len=0 } };
+    calculate_huff_codes(codes, &freq_table, huff_tree_size);
 
-    for (int i = 0; i < huff_tree.size; i++) {
-      if (huff_tree.nodes[i].freq > 0) {
-            printf("%c[%d]: %d\n", huff_tree.nodes[i].chr, i,  huff_tree.nodes[i].freq);
+    for (int i = 0; i < ASCII_SIZE; i++) {
+        if (codes[i].code_len != 0) {
+            printf("%c[%d]: code=%d, len=%d\n", codes[i].chr, (int)codes[i].chr, codes[i].code, codes[i].code_len);
         }
     }
 
