@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "huffman.h"
 #include "base_huffman.h"
@@ -15,15 +14,13 @@
 #define LEFT_CODE 1
 
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
-static int compare_tree_nodes(const void* node1, const void* node2);
-
 static min_heap_node_t* pop_min(min_heap_t* min_heap, min_heap_t* buff_huff_codes);
 
-static void insert_and_update(min_heap_t* huff_tree, min_heap_node_t new_node);
+static void insert(min_heap_t* huff_tree, min_heap_node_t new_node);
 
 static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_start);
 
-static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size);
+static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes);
 
 static void build_huff_tree(min_heap_t* min_heap, min_heap_t* buff_min_heap);
 
@@ -63,7 +60,7 @@ void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff
 {
   /* Initialize Huffman Tree with min-heap */
   min_heap_node_t* nodes = (min_heap_node_t*)calloc(huff_tree_size, sizeof(min_heap_node_t));
-  min_heap_t min_heap = create_min_heap(freq_table, nodes, huff_tree_size);
+  min_heap_t min_heap = create_min_heap(freq_table, nodes);
 
   /* Build huff_tree */
   int buff_nodes_count = 2*huff_tree_size-1;
@@ -87,8 +84,8 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
   int content_ind = 0;
 
   char chr_to_encode = content.content[content_ind];
-  int code = huff_table->codes[chr_to_encode].code;
-  int code_len = huff_table->codes[chr_to_encode].code_len;
+  int code = huff_table->codes[(int)chr_to_encode].code;
+  int code_len = huff_table->codes[(int)chr_to_encode].code_len;
 
   char is_ready = 0;
 
@@ -104,8 +101,8 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
 
     if (is_ready) {
       chr_to_encode = content.content[content_ind];
-      code = huff_table->codes[chr_to_encode].code;
-      code_len = huff_table->codes[chr_to_encode].code_len;
+      code = huff_table->codes[(int)chr_to_encode].code;
+      code_len = huff_table->codes[(int)chr_to_encode].code_len;
       is_ready = 0;
     }
 
@@ -247,15 +244,15 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_star
 
     /* Set left parent */
     if (left->chr != COMBINED_CHARACTER) {
-      codes[left->chr].chr = left->chr;
-      codes[left->chr].code = left->code;
-      codes[left->chr].code_len = left->code_len;
+      codes[(int)left->chr].chr = left->chr;
+      codes[(int)left->chr].code = left->code;
+      codes[(int)left->chr].code_len = left->code_len;
     }
     /* Set right parent */
     if (right->chr != COMBINED_CHARACTER) {
-      codes[right->chr].chr = right->chr;
-      codes[right->chr].code = right->code;
-      codes[right->chr].code_len = right->code_len;
+      codes[(int)right->chr].chr = right->chr;
+      codes[(int)right->chr].code = right->code;
+      codes[(int)right->chr].code_len = right->code_len;
     }
 
     set_node_code(left, codes, 0);
@@ -265,22 +262,20 @@ static void set_node_code(min_heap_node_t* node, huff_code_t* codes, int is_star
   return;
 }
 
-static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes, int huff_tree_size)
+static min_heap_t create_min_heap(freq_table_t* freq_table, min_heap_node_t* nodes)
 {
   min_heap_t min_heap = { .nodes=nodes, .size=0 };
 
-  int is_initialized = 0;
-  int empty_ind = 0;
-
   for (int i = 0; i < freq_table->size; i++) {
     if (freq_table->frequencies[i].freq > 0) {
-      min_heap_node_t node = {
-        .chr = freq_table->frequencies[i].chr,
-        .freq = freq_table->frequencies[i].freq,
-        .left = NULL,
-        .right = NULL,
-      };
-      insert_and_update(&min_heap, node);
+        min_heap_node_t node = {
+            .chr = freq_table->frequencies[i].chr,
+            .freq = freq_table->frequencies[i].freq,
+            .left = NULL,
+            .right = NULL,
+        };
+
+        insert(&min_heap, node);
     }
   }
 
@@ -302,7 +297,7 @@ static void build_huff_tree(min_heap_t* min_heap, min_heap_t* buff_min_heap)
         .right = right,
     };
 
-    insert_and_update(min_heap, new_node);
+    insert(min_heap, new_node);
   }
   return;
 }
@@ -321,7 +316,7 @@ static min_heap_node_t* pop_min(min_heap_t* min_heap, min_heap_t* buff_huff_code
   return min_node;
 }
 
-static void insert_and_update(min_heap_t* huff_tree, min_heap_node_t new_node)
+static void insert(min_heap_t* huff_tree, min_heap_node_t new_node)
 {
   huff_tree->nodes[huff_tree->size] = new_node;
   huff_tree->size++;

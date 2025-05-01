@@ -17,8 +17,6 @@ static int compare_huff_code(const void* code1, const void* code2);
 
 static int compare_freq_table(const void* elem1, const void* elem2);
 
-static int compare_tree_nodes(const void* node1, const void* node2);
-
 /**************************** STATIC FUNCTION DECLARATIONS ****************************/
 freq_table_t get_freq_table(char* content)
 {
@@ -89,18 +87,6 @@ static int compare_freq_table(const void* elem1, const void* elem2)
         } else {
             return 1;
         }
-    }
-}
-
-static int compare_tree_nodes(const void* node1, const void* node2)
-{
-    huff_tree_node_t* tree_node1 = (huff_tree_node_t*)node1;
-    huff_tree_node_t* tree_node2 = (huff_tree_node_t*)node2;
-
-    if (tree_node1->freq < tree_node2->freq) {
-        return -1;
-    } else {
-        return 1;
     }
 }
 

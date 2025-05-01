@@ -14,11 +14,6 @@ typedef enum {
 } file_status_t;
 
 typedef struct {
-  char* data;
-  int count;
-} reformatting_data_t;
-
-typedef struct {
   char chr;
   char* code;
 } encode_metadata_t;
