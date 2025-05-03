@@ -18,7 +18,7 @@ typedef struct {
     int size;
 } min_heap_t;
 
-decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len);
+decoded_content_t huffman_decode(read_content_t content, metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len);
 
 encoded_content_t huffman_encode(read_content_t content, char* encoded_data, canonical_huff_table_t* huff_table, int* unencoded_code, int* unencoded_code_len);
 

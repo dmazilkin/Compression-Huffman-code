@@ -24,18 +24,30 @@ int main(int argc, char* argv[]) {
 
     printf("Start application...\n");
 
-    parser_status_t status = parse_args(argc, argv, &arguments);
+    parser_status_t arg_status = parse_args(argc, argv, &arguments);
 
-    /* Check if provided option is available */
-    if (status == PARSE_ERROR_UNKNOWN_OPTION) {
-        printf("Error! Status code %d: Unknown option!\n", status);
-        return PARSE_ERROR_UNKNOWN_OPTION;
+    /* Check if provided input source type is available */
+    if (arg_status == PARSE_ERROR_UNDEFINED_INPUT) {
+        printf("ERROR! Exit with status code %d: Undefined input!\n", arg_status);
+        return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    /* Check if provided input source type is available*/
-    if (status == PARSE_ERROR_UNDEFINED_INPUT) {
-      printf("Error! Status code %d: Undefined input!\n", status);
-      return PARSE_ERROR_UNDEFINED_INPUT;
+    /* Check if provided input source type is available */
+    if (arg_status == PARSE_ERROR_UNDEFINED_OUTPUT) {
+        printf("ERROR! Exit with status code %d: Undefined output!\n", arg_status);
+        return PARSE_ERROR_UNDEFINED_OUTPUT;
+    }
+
+    /* Check if operation option is provided */
+    if (arg_status == PARSE_ERROR_UNDEFINED_OPERATION) {
+        printf("ERROR! Exit with status code %d: Operation option is required!\n", arg_status);
+        return PARSE_ERROR_UNDEFINED_OPERATION;
+    }
+
+    /* Check if provided option is available */
+    if (arg_status == PARSE_ERROR_UNKNOWN_OPTION) {
+        printf("ERROR! Exit with status code %d: Unknown option!\n", arg_status);
+        return PARSE_ERROR_UNKNOWN_OPTION;
     }
 
     char* operation = (arguments.operation == COMPRESSION) ? "Compressing" : "Decompressing";
@@ -45,14 +57,14 @@ int main(int argc, char* argv[]) {
     app_status_t app_status = app(arguments);
 
     if (app_status == APP_STATUS_ERROR) {
-      printf("Error! Application status code: %d\n", app_status);
+      printf("ERROR! Application finished with status code: %d.\n", app_status);
+      return APP_STATUS_ERROR;
     }
 
-    printf("Done.\n");
-    printf("Result can be found in \"%s\".\n", arguments.output_val);
+    printf("[Done]\nResult can be found in \"%s\".\n", arguments.output_val);
     printf("Exiting application.\n");
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /**************************** STATIC FUNCTION DEFINITIONS ****************************/

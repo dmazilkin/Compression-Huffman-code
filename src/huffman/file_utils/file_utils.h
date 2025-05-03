@@ -5,15 +5,13 @@
 
 typedef enum {
   FILE_READ_SUCCESS=0,
-  FILE_WRITE_SUCCESS=1,
-  FILE_READ_NOT_FOUND,
-  FILE_WRITE_ERROR,
-} file_status_t;
+  FILE_READ_ERROR,
+} read_status_t;
 
-typedef struct {
-  char chr;
-  char* code;
-} encode_metadata_t;
+typedef enum {
+  FILE_WRITE_SUCCESS=0,
+  FILE_WRITE_ERROR,
+} write_status_t;
 
 typedef struct {
   char* content;
@@ -23,8 +21,12 @@ typedef struct {
 typedef struct {
   int code;
   int code_len;
+} metadata_codes_t;
+
+typedef struct {
+  metadata_codes_t* codes;
   int shift;
-} decode_metadata_t;
+} metadata_t;
 
 typedef struct {
   char* content;
@@ -40,16 +42,16 @@ typedef struct {
   int undecoded_code_len;
 } decoded_content_t;
 
-file_status_t read_chunk_to_encode(char* file_name, read_content_t* read_content, int chunk_size);
+read_status_t read_chunk_to_encode(char* file_name, read_content_t* read_content, int chunk_size);
 
-file_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size);
+read_status_t read_chunk_to_decode(char* file_name, read_content_t* read_content, int chunk_size);
 
-file_status_t save_metadata(canonical_huff_table_t* huff);
+write_status_t save_encoded_chunk(char* file_name, encoded_content_t* content);
 
-file_status_t read_metadata(decode_metadata_t* metadata);
+write_status_t save_decoded_chunk(char* file_name, decoded_content_t* decoded_content);
 
-file_status_t save_encoded(char* file_name, encoded_content_t* content);
+write_status_t save_metadata(metadata_t* metadata, int metadata_size);
 
-file_status_t save_decoded(char* file_name, decoded_content_t* decoded_content);
+read_status_t read_metadata(metadata_t* metadata);
 
 #endif //IO_H

@@ -16,30 +16,30 @@ parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
                 if (!strcmp(&args_src[i][2], "input")) {
                     args_dst->input_type = INPUT_FILE;
                     args_dst->input_val = args_src[i+1];
-                } else if (!strcmp(&args_src[i][2], "msg")) {
-                    args_dst->input_type = INPUT_MSG;
-                    args_dst->input_val = args_src[i+1];
-                } else if (!strcmp(&args_src[i][2], "output")) {
+                }
+                else if (!strcmp(&args_src[i][2], "output")) {
                     args_dst->output_type = OUTPUT_FILE;
                     args_dst->output_val = args_src[i+1];
-                } else {
+                }
+                else {
                     return PARSE_ERROR_UNKNOWN_OPTION;
                 }
             } else {
                 if (args_src[i][1] == 'i') {
                     args_dst->input_type = INPUT_FILE;
                     args_dst->input_val = args_src[i+1];
-                } else if (!strcmp(&args_src[i][1], "m")) {
-                    args_dst->input_type = INPUT_MSG;
-                    args_dst->input_val = args_src[i+1];
-                } else if (args_src[i][1] == 'o') {
+                }
+                else if (args_src[i][1] == 'o') {
                     args_dst->output_type = OUTPUT_FILE;
                     args_dst->output_val = args_src[i+1];
-                } else if (args_src[i][1] == 'c') {
+                }
+                else if (args_src[i][1] == 'c') {
                     args_dst->operation = COMPRESSION;
-                } else if (args_src[i][1] == 'd') {
+                }
+                else if (args_src[i][1] == 'd') {
                     args_dst->operation = DECOMPRESSION;
-                } else {
+                }
+                else {
                     return PARSE_ERROR_UNKNOWN_OPTION;
                 }
             }
@@ -51,9 +51,9 @@ parser_status_t parse_args(int argc, char* args_src[], arg_t* args_dst) {
         return PARSE_ERROR_UNDEFINED_INPUT;
     }
 
-    /* check if output_type is provided, otherwise set msg */
+    /* check if output_type is provided, otherwise return error */
     if (args_dst->output_type == OUTPUT_UNDEFINED) {
-        args_dst->output_type = OUTPUT_MSG;
+        return PARSE_ERROR_UNDEFINED_OUTPUT;
     }
 
     /* check if operation type is set, otherwise return error */

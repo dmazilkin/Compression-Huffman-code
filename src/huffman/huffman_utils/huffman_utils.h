@@ -1,9 +1,6 @@
 #ifndef HUFFMAN_UTILS_H
 #define HUFFMAN_UTILS_H
 
-#include "file_utils.h"
-#include "canonical_huffman.h"
-
 typedef struct {
     char chr;
     int freq;
@@ -44,8 +41,6 @@ typedef struct {
     int size;
 } huff_table_t;
 
-freq_table_t create_freq_table(char_freq_t* frequencies);
-
-void update_freq_table(read_content_t* read_content, freq_table_t* freq_table);
+freq_table_t create_freq_table(char_freq_t* frequencies, int size);
 
 #endif //HUFFMAN_UTILS_H

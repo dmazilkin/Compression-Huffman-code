@@ -39,7 +39,6 @@ void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff
   int buff_nodes_count = 2*huff_tree_size-1;
   min_heap_node_t* buff_nodes = (min_heap_node_t*)calloc(buff_nodes_count, sizeof(min_heap_node_t));
   min_heap_t buff_min_heap = { .nodes=buff_nodes, .size=0 };
-
   build_huff_tree(&min_heap, &buff_min_heap);
 
   /* Calculate Huffman code */
@@ -143,7 +142,7 @@ encoded_content_t huffman_encode(read_content_t content, char* encoded_data, can
   return encoded_content;
 }
 
-decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len)
+decoded_content_t huffman_decode(read_content_t content, metadata_t* metadata, char* encoded_data, int undecoded_code, int undecoded_code_len)
 {
   decoded_content_t decoded_content = { .content = encoded_data, .content_size = 0, .undecoded_code = undecoded_code, .undecoded_code_len = undecoded_code_len };
   int decoded_ind = 0;
@@ -171,7 +170,7 @@ decoded_content_t huffman_decode(read_content_t content, decode_metadata_t* meta
     code_len++;
 
     for (char i = 0; i < ASCII_SIZE - 1; i++) {
-      if ((code == metadata[(int)i].code) && (code_len == metadata[(int)i].code_len) && (metadata[(int)i].code_len != 0)) {
+      if ((code == metadata->codes[(int)i].code) && (code_len == metadata->codes[(int)i].code_len) && (metadata->codes[(int)i].code_len != 0)) {
         decoded_content.content[decoded_ind] = i;
         decoded_ind++;
         code = 0;

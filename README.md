@@ -1,53 +1,61 @@
 # Canonical Huffman code for compression
-This repo contains *Canonical Huffman code* implementation from scratch, which can be used for text and files compression.
+This repo contains *Canonical Huffman code* implementation from scratch. This can be used to compress files containing ASCII characters.
 
 ### Project structure
 In the project directory you can find the following:
-- **src** - main directory, contains all sources for compiling executable:
-   - **app** - contains state machine for compress and decompress data,
-   - **arg_parser** - parser for program options,
-   - **huffman_utils** - contains logic for frequency table, Huffman Tree and Huffman codes,
-   - **canonical_huffman** - contains logic for Canonical Huffman codes,
-   - **io_utils** - contains utils for parsing program options, read and write metadata and data to file and cli.
+- **src** - directory with all sources for compiling:
+    - **main.c** - entry point, contains logic to start the application,
+    - **app** - contains state machine for compress and decompress data,
+    - **arg_parser** - parser for program options,
+    - **huffman** - contains main logic for Huffman encoding:
+        - **huffman.c** - contains logic for building Huffman Tree, Huffman Codes and call Canonical Huffman, 
+        - **huffman_utils** - contains logic for frequency table,
+        - **canonical_huffman** - contains logic for Canonical Huffman codes,
+        - **io_utils** - contains utils for parsing program options, read and write metadata and data to file.
 
 # Algorithm Overview
 ![AlgorithmScheme](docs/HuffmanScheme.png)
 ### Compression steps:
-1. Read data:
-   - data is read in chunks until eof is reached.
-2. Huffman Tree:
-   - calculate frequency table,
-   - create Huffman Tree with min-heap,
+1. Read data and building Frequency table:
+   - read chunk of data,
+   - update frequency table, which is implemented as LUT (char array of size 128 for accessing char frequency in O(1) time),
+   - repeat until EOF is reached.
+2. [Build Huffman Tree and assign Huffman Codes](https://en.wikipedia.org/wiki/Huffman_coding):
+   - create min-heap from Frequency table based on character frequency (exclude zero frequency char),
+   - build Huffman Tree with min-heap to select the two minimal nodes and insert the new one in O(n*logn) time.
    - assign initial Huffman codes.
-3. Canonical Huffman code:
-   - sort initial Huffman codes by code length,
-   - assign first character code 0 with length of Canonical Huffman code,
-   - increase next character code by 0b1,
-   - shift next character by length difference.
-4. Decode and save data:
-   - read data from file in chunks,
-   - decode chunk of data with Canonical Huffman code,
+3. [Canonical Huffman code](https://en.wikipedia.org/wiki/Canonical_Huffman_code):
+   - sort Huffman codes by code length,
+   - create Canonical Huffman table for codes as LUT,
+   - assign first character code 0 with length of Huffman code,
+   - increase next character code by 0b1, 
+   - shift character code by difference in code length.
+4. Encode and save data:
+   - read chunk of data,
+   - encode chunk of data with Canonical Huffman table,
    - save chunk of data to file,
-5. Save metadata to ".metadata" file:
-   - save Canonical Huffman code,
-   - save count of shift bits.
+   - repeat until EOF is reached.
+5. Save metadata:
+   - transform Canonical Huffman table to format for saving,
+   - save count of shift bits, codes and number of significant bits for each code to *.metadata*.
 
 ### Decompression steps:
-1. Read metadata from ".metadata" file:
+1. Read metadata:
    - read count of shift bits,
-   - read Canonical Huffman code.
-2. Read and decode Canonical Huffman codes:
+   - read Canonical Huffman codes and save as LUT.
+2. Read and decode data:
    - read data in chunks,
    - decode chunk of data with Canonical Huffman code,
-   - save decoded chunk of data.
+   - save decoded chunk of data,
+   - repeat until EOF is reached.
 
 # Usage
 ## Compiling
-First you need to compile source files into one executable file. Simply start Makefile script from project folder as follows:
+First compile source files into one executable file. Simply start Makefile script from project folder as follows:
 ```console
 make 
 ```
-after compiling is completed, **huffman** executable file can be found in directory *build/*. 
+after compiling is completed, **huffman** executable file can be found in *build/* directory. 
 
 ## Running program
 To run **main** program the following command:
@@ -56,14 +64,28 @@ To run **main** program the following command:
 ```
 also don't forget to provide *program options* for input, output and operation.
 
-## Available program options
+### Available program options
 To compress files or text by running **main** program you should also provide paths some arguments:
-- use *-i* or *--input* to compress file,
-- use *-m* or *--msg* to compress text from command line,
-- use *-o* or *--output* to provide output file path.
+- use *-i* or *--input* for input file,
+- use *-o* or *--output* for output file,
+- use *-c* for compression,
+- use *-d* for decompression.
 
-**NOTE**: *-i* and *-m* options are both xor, so you can choose one of them, otherwise program terminates with error.
-Option *-o* optional, so if it's not specified the output will be printed to the command line.
+**NOTE**: after data compression is finished successfully, metadata are saved in *.metadata* file. 
 
-**NOTE**: after decoding data all necessary metadata are saved in *.metadata* file. It can not be changed with program options, this is hardcoded name. 
-**Do not change this file!**
+**NOTE**: The output file is written in chunks. If the specified output file already exists, the data will be appended to the end instead of overwriting the file.
+
+### Examples
+Example of input text can be found in *input/* directory.
+#### Compression example:
+```console
+./build/huffman -i input/LoremIpsum.txt -o output/LoremIpsum.huff -c
+```
+this command will result in a compressed *LoremIpsum.huff* file of 3707 bytes instead of the original 6902 bytes:
+![Input](docs/ExampleInput.png)![Output](docs/ExampleOutput.png)
+
+#### Decompression example:
+```console
+./build/huffman -i output/LoremIpsum.huff -o output/LoremIpsum_decoded.txt -d
+```
+this command will result in a decompressed *LoremIpsum_decoded.txt* file with original text from *LoremIpsum.txt*.
