@@ -135,6 +135,8 @@ static app_status_t compress_from_file(char* input_file_name, char* output_file_
         return APP_STATUS_ERROR;
     }
 
+    free(canonical_codes);
+
     return APP_STATUS_SUCCESS;
 }
 

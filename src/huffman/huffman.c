@@ -38,12 +38,15 @@ void calculate_huff_codes(huff_code_t* codes, freq_table_t* freq_table, int huff
   /* Build huff_tree */
   int buff_nodes_count = 2*huff_tree_size-1;
   min_heap_node_t* buff_nodes = (min_heap_node_t*)calloc(buff_nodes_count, sizeof(min_heap_node_t));
-  min_heap_t buff_min_heap = { .nodes=buff_nodes, .size=0 };
+  min_heap_t buff_min_heap = { .nodes = buff_nodes, .size = 0 };
   build_huff_tree(&min_heap, &buff_min_heap);
 
   /* Calculate Huffman code */
   min_heap_node_t* peak = &(min_heap.nodes[0]);
   set_node_code(peak, codes, 1);
+
+  free(nodes);
+  free(buff_nodes);
 
   return;
 }
